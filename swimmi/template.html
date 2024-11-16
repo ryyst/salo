@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mahtuuko tänään uimaan?</title>
+    <style>
+        html {
+          font-family: Calibri, Arial, sans-serif;
+          font-size: 24px;
+
+          background-color: #e5e5e5;
+          color: #111;
+
+          box-sizing: border-box;
+        }
+        body {
+          margin: 0;
+        }
+
+
+        .content {
+          max-width: 19rem;
+          margin: 0 auto;
+          padding: 0 8px;
+        }
+
+        h1 { font-size: 1.5rem; }
+        h2 { font-size: 1.1rem; }
+        h3 { font-size: 0.8rem; }
+
+        .subtitle {
+          font-size: 0.9rem;
+          margin-bottom: 8px;
+        }
+
+        .current-time {
+          color: #ff0c00;
+        }
+
+        .font-p {
+          font-size: 0.65rem;
+        }
+
+        .poolname {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 1.35rem;
+        }
+
+        .event {
+          margin: 0;
+          padding: 0.3rem 0.2rem;
+        }
+
+        .text-center {
+          text-align: center;
+        }
+
+        .fade {
+          mask: linear-gradient(to top, rgb(0, 0, 0) 0, rgb(0, 0, 0) 0%, rgba(0,0,0, 0) 85%, rgba(0,0,0, 0) 0 ) 100% repeat-x;
+        }
+        .recent-past {
+          opacity: 30%;
+        }
+
+
+        table {
+          border-collapse: collapse;
+        }
+
+        th, td {
+          padding-left: 1px;
+          padding-bottom: 1px;
+          padding-top: 0px;
+
+          min-height: 1rem;
+          width: 1rem;
+          height: 1rem;
+        }
+
+        .pool-H, .pool-K {
+          width: 0.85rem;
+        }
+
+        .pool-L, .pool-T {
+          padding-bottom: 1px;
+
+          width: 1.35rem;
+        }
+
+        /* Cells */
+        th, td {
+          line-height: 0.95rem;
+          font-size: 0.6rem;
+        }
+        th>div, td>div {
+          width: 100%;
+          height: 100%;
+
+          border-radius: 0px;
+
+          position: relative;
+        }
+
+        /* Table headers */
+        th>div {
+          font-weight: 600;
+          background-color: #dadada;
+        }
+        /* Table cells */
+        td>div {
+          background-color: #ffffff;
+        }
+        .cell-fill {
+          position: absolute;
+          width: 100%;
+          left: 0;
+          box-sizing: border-box;
+        }
+
+        :nth-child(1 of .open) {
+          border-top: 1px solid #CCC;
+        }
+        :nth-last-child(1 of .open) {
+          border-bottom: 1px solid #CCC;
+        }
+
+        .closed {
+          opacity: 0.35;
+        }
+
+        .empty {
+          background: none;
+          border: none;
+        }
+
+
+        label, a, a:visited, a:active {
+          color: #999;
+          text-decoration: none;
+        }
+
+        .updated {
+          font-size: 0.75rem;
+          color: #BBB;
+        }
+
+        /* Pool border areas */
+        .pool-H.lane-S {
+          border-right: 2px dashed #BBB;
+          padding-right: 6px;
+        }
+        .pool-K.lane-1, .pool-T {
+          padding-left: 6px;
+        }
+        .pool-K.lane-6 {
+          padding-right: 6px;
+        }
+
+        .pool-L {
+          padding-right: 6px;
+          padding-left: 6px;
+
+          border-left: 2px dashed #BBB;
+          border-right: 2px dashed #BBB;
+        }
+
+        .prev {
+          float: left;
+        }
+        .next {
+          padding: 0 8px;
+          float: right;
+        }
+        .navigation {
+          background: #dadada;
+          font-size: 0.50rem;
+          line-height: 0.50rem;
+          padding: 8px;
+        }
+    </style>
+</head>
+<body>
+    {# This fun little thing generates all of the event positions & sizes in the table. #}
+    {% macro get_reservation(hour, pool, lane) -%}
+      {%- for event in pool.events -%}
+        {%- if hour in event.hours and event.lane == lane -%}
+          <div
+            class="cell-fill"
+            style="background-color: rgb{{event.color}}; border: 1px solid rgb{{event.borderColor}};
+              {%- if event.endHour - event.startHour == 1 and event.endMin == 0 -%}
+                top: 0; height: 100%; border-radius: 3px;
+              {%- elif (hour == event.startHour and hour == event.endHour) -%}
+                top: {{ event.startMin / 60 * 100 }}%; height: {{ (event.endMin - event.startMin) / 60 * 100 }}%; border-radius: 3px;
+              {%- elif hour == event.startHour -%}
+                bottom: 0; height: {{ 100 - (event.startMin / 60 * 100) }}%; border-radius: 3px 3px 0 0; border-bottom: 0;
+              {%- elif hour == event.endHour  -%}
+                top: 0; height: {{ event.endMin / 60 * 100 }}%; border-radius: 0 0 3px 3px; border-top: 0;
+              {%- else -%}
+                top: 0; height: 100%;
+                {%- if event.endHour == hour + 1 and event.endMin == 0 -%}
+                  border-radius: 0 0 3px 3px;
+                {%- else -%}
+                  border-top: 0; border-bottom: 0;
+                {%- endif -%}
+              {%- endif -%}
+            "></div>
+        {%- endif -%}
+      {%- endfor -%}
+    {%- endmacro %}
+
+    <div class="text-center sm navigation">
+      <span class="prev"><a href="{{ data.config.prev_date_link }}">< Edel.</a></span>
+      <span class="today">{% if not data.config.is_today %}<a href="/">Palaa</a>{% else %}&nbsp;{% endif %}</span>
+      <span class="next"><a href="{{ data.config.next_date_link }}">Seur. ></a></span>
+    </div>
+
+    <div class="content">
+
+      <div class="sm" style="padding: 0.75rem 0;">
+        <h1 class="text-center" style="margin: 0">Salon uimahalli</h1>
+        <p class="subtitle text-center" style="margin-top: 0">
+          {{ data.config.current_day_stamp }} <span class="current-time"></span>
+        </p>
+      </div>
+
+      {% if data.config.is_today %}
+        <div class="font-p sm">
+          <label><input type="checkbox" id="toggleCheckbox" checked="false" style="margin-left: 16px; margin-right: 8px;">Kaikki</label>
+        </div>
+      {% endif %}
+
+      <table class="sm text-center">
+        <tr>
+          <th class="empty"></th>
+          {%- for pool in data.pools -%}
+            <th class="poolname" colspan="{{ pool.lanes|length }}">
+              {%- if pool.lanes|length == 1 -%}{{ pool.shortName }}{% else %}{{ pool.name }}{%- endif -%}
+            </th>
+          {%- endfor -%}
+        </tr>
+        <tr>
+          <th class="empty"></th>
+          {% for pool in data.pools -%}
+            {%- for lane in pool.lanes -%}
+              <th class="pool-{{ pool.letter }} lane-{{ lane }}"><div>{{ lane }}</div></th>
+            {%- endfor -%}
+          {%- endfor %}
+        </tr>
+
+        {% for hour in data.config.hours %}
+          <tr class="hour-{{ hour }} {% if hour in data.config.open_hours %}open{% else %}closed{% endif %}">
+            <th><div>{{ hour }}</div></th>
+            {% for pool in data.pools %}
+              {%- for lane in pool.lanes -%}
+                <td class="pool-{{ pool.letter }} lane-{{ lane }}">
+                  <div>{{ get_reservation(hour, pool, lane) }}</div>
+                </td>
+              {%- endfor -%}
+            {%- endfor %}
+          </tr>
+        {% endfor %}
+      </table>
+
+      <div id="reservations" class="sm font-p">
+        <h2>Varaukset</h2>
+        {% for pool in data.pools -%}
+          <h3>{{ pool.name }}</h3>
+          {% for event in pool.events -%}
+            {% if not event.fake %}
+              <p class="hour-{{ event.endHour }} event" style="border-left: 4px solid rgb{{event.color}}">
+                <strong>{{ event.humanTime }}</strong> {{ event.laneFull }} - {{ event.info }}
+              </p>
+            {%- endif %}
+          {%- endfor %}
+        {%- endfor %}
+      </div>
+
+      <p class="updated text-center">
+        Päivitetty
+        {{ data.config.updated_stamp }}
+        -
+        <a href="https://salo.fi/vapaa-aika-ja-matkailu/liikunta/sisaliikuntapaikat/uimahalli/" target="_blank">Aukioloajat</a>
+      </p>
+
+    </div>
+
+    {% if data.config.is_today %}
+      <script>
+        function hideOldHours(yes) {
+          const recentPast = (new Date()).getHours() - 1;
+
+          for (let i = {{ data.config.hours[0] }}; i < recentPast; i++) {
+            const elems = document.querySelectorAll(`.hour-${i}`) || [];
+            elems.forEach((elem) => {
+              elem.style.display = yes ? "none" : "";
+            });
+          }
+
+          if (yes) {
+            const all = document.querySelectorAll(`.hour-${recentPast}`);
+            all?.forEach((elem, i) => {
+              // Separate classes for the table & bottom listing.
+              elem?.classList?.add(i === 0 ? "fade" : "recent-past");
+            })
+          } else {
+            const all = document.querySelectorAll(`.hour-${recentPast}`);
+            all?.forEach((elem) => {
+              elem?.classList?.remove("fade");
+              elem?.classList?.remove("recent-past");
+            })
+          }
+        }
+
+        hideOldHours(true)
+
+        const toggle = document.getElementById("toggleCheckbox")
+        toggle.checked = false
+
+
+        toggle.addEventListener("change", function () {
+          hideOldHours(!this.checked)
+        })
+      </script>
+    {% endif %}
+</body>
+</html>
