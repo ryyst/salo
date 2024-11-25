@@ -8,7 +8,7 @@ def get_epoch():
     return int(datetime.now().timestamp() * 1000)
 
 
-def get_date(epoch: int | float):
+def get_date(epoch: Union[int, float]):
     return datetime.fromtimestamp(epoch // 1000)
 
 
@@ -29,12 +29,12 @@ def color_darken(color: tuple) -> tuple:
     return hls_to_rgb(*darker)
 
 
-def ymd(epoch: int | float):
+def ymd(epoch: Union[int, float]):
     """Get YYYY-MM-DD formatted timestamp from an epoch value."""
     return get_date(epoch).strftime("%Y-%m-%d")
 
 
-def hhmm(epoch: int | float):
+def hhmm(epoch: Union[int, float]):
     """Get HH:MM formatted timestamp from an epoch value."""
     return get_date(epoch).strftime("%H:%M")
 
