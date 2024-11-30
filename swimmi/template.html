@@ -332,8 +332,14 @@
               elem?.classList?.add(i === 0 ? "fade" : "recent-past");
             })
           } else {
-            const all = document.querySelectorAll(`.hour-${recentPast}`);
-            all?.forEach((elem) => {
+            const tableRows = document.querySelectorAll(`tr`);
+            tableRows?.forEach((elem) => {
+              elem?.classList?.remove("fade");
+              elem?.classList?.remove("recent-past");
+            })
+
+            const listing = document.querySelectorAll(`.hour-${recentPast}`);
+            listing?.forEach((elem) => {
               elem?.classList?.remove("fade");
               elem?.classList?.remove("recent-past");
             })
