@@ -4,20 +4,20 @@
 
 TIMMI = {
     # Note: public credentials
-    "host": "https://asp3.timmi.fi/WebTimmi/",
+    "host": "https://tilavaraus.jict.fi/WebTimmi/",
     "login_params": {
-        "loginName": "SALO_LIIKUNTA",
-        "password": "GUEST",
-        "roomId": 504480,
-        "adminAreaId": 316,
+        "loginName": "guest_kempele",
+        "password": "salasana",
+        "profileId": 547,
+        "adminAreaId": 10,
     },
     "room_parts_params": {
-        "type": 6,
-        "ids": 1227,
+        "type": 4,
+        "ids": 547,
     },
 }
 
-PAGE_HEADER = "Salon uimahalli"
+PAGE_HEADER = "Zimmari"
 
 RENDER_HOURS = list(range(5, 23))
 
@@ -27,13 +27,13 @@ RENDER_HOURS = list(range(5, 23))
 #
 # TODO: Needs some automagicks here.
 OPEN_HOURS = [
-    (6, 21),
-    (6, 21),
     (12, 20),
     (6, 21),
     (6, 21),
-    (11, 18),
-    (11, 18),
+    (6, 21),
+    (9, 20),
+    (9, 17),
+    (9, 17),
 ]
 
 # H = "Hyppyallas"
