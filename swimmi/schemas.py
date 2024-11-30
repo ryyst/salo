@@ -34,6 +34,7 @@ class PageConfig(BaseModel):
     prev_date_link: str
     next_date_link: str
     is_today: bool
+    page_header: str
 
 
 class PageData(BaseModel):

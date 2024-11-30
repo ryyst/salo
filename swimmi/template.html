@@ -55,6 +55,10 @@
         }
 
         .text-center {
+          margin: 0 auto;
+        }
+
+        .text-center {
           text-align: center;
         }
 
@@ -234,7 +238,7 @@
       {%- endfor -%}
     {%- endmacro %}
 
-    <div class="text-center sm navigation">
+    <div class="text-center navigation">
       <span class="prev"><a href="{{ data.config.prev_date_link }}">< Edel.</a></span>
       <span class="today">{% if not data.config.is_today %}<a href="/">Palaa</a>{% else %}&nbsp;{% endif %}</span>
       <span class="next"><a href="{{ data.config.next_date_link }}">Seur. ></a></span>
@@ -242,20 +246,20 @@
 
     <div class="content">
 
-      <div class="sm" style="padding: 0.75rem 0;">
-        <h1 class="text-center" style="margin: 0">Salon uimahalli</h1>
+      <div style="padding: 0.75rem 0;">
+        <h1 class="text-center" style="margin: 0">{{ data.config.page_header }}</h1>
         <p class="subtitle text-center" style="margin-top: 0">
           {{ data.config.current_day_stamp }} <span class="current-time"></span>
         </p>
       </div>
 
       {% if data.config.is_today %}
-        <div class="font-p sm">
+        <div class="font-p">
           <label><input type="checkbox" id="toggleCheckbox" checked="false" style="margin-left: 16px; margin-right: 8px;">Kaikki</label>
         </div>
       {% endif %}
 
-      <table class="sm text-center">
+      <table class="center text-center">
         <tr>
           <th class="empty"></th>
           {%- for pool in data.pools -%}
@@ -290,7 +294,7 @@
         {% endfor %}
       </table>
 
-      <div id="reservations" class="sm font-p">
+      <div id="reservations" class="font-p">
         <h2>Varaukset</h2>
         {% for pool in data.pools -%}
           <h3>{{ pool.name }}</h3>

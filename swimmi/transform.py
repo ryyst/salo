@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 from swimmi.config import (
     HALF_POOL_MARKERS,
     OPEN_HOURS,
+    PAGE_HEADER,
     RENDER_HOURS,
     SINGLE_LANE_POOLS,
     WHOLE_POOL_MARKER,
@@ -235,6 +236,7 @@ def _transform_page_data(data: RawPageData, page_date: datetime) -> PageData:
         prev_date_link="/" if is_tomorrow else "/" + prev_date.strftime("%Y-%m-%d"),
         next_date_link="/" if is_yesterday else "/" + next_date.strftime("%Y-%m-%d"),
         is_today=is_today,
+        page_header=PAGE_HEADER,
     )
 
     return PageData(pools=pools, config=config)

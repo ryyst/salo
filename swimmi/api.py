@@ -1,3 +1,4 @@
+from swimmi.config import TIMMI
 from utils.baseapi import BaseAPI
 
 
@@ -5,21 +6,13 @@ class SwimmiAPI(BaseAPI):
     """Timmi API client."""
 
     def __init__(self):
-        super().__init__("https://asp3.timmi.fi/WebTimmi/")
+        super().__init__(TIMMI["host"])
 
     def login(self):
         self.request(
             "GET",
             "login.do",
-            {
-                # Note: public credentials
-                "params": {
-                    "loginName": "SALO_LIIKUNTA",
-                    "password": "GUEST",
-                    "roomId": 504480,
-                    "adminAreaId": 316,
-                }
-            },
+            {"params": TIMMI["login_params"]},
             useJSON=False,
         )
 
@@ -63,8 +56,7 @@ class SwimmiAPI(BaseAPI):
             {
                 "params": {
                     "actionCode": "getRoomPartInfos",
-                    "type": 6,
-                    "ids": 1227,
+                    **TIMMI["room_parts_params"],
                     "interpreterLangId": 0,
                     "cumulativeMode": 1,
                     "_": epoch,

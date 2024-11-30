@@ -2,6 +2,23 @@
 # General hard-coded parameters for rendering the swimmi data.
 #
 
+TIMMI = {
+    # Note: public credentials
+    "host": "https://asp3.timmi.fi/WebTimmi/",
+    "login_params": {
+        "loginName": "SALO_LIIKUNTA",
+        "password": "GUEST",
+        "roomId": 504480,
+        "adminAreaId": 316,
+    },
+    "room_parts_params": {
+        "type": 6,
+        "ids": 1227,
+    },
+}
+
+PAGE_HEADER = "Salon uimahalli"
+
 RENDER_HOURS = list(range(5, 23))
 
 
