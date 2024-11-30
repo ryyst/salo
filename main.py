@@ -14,6 +14,11 @@ class RunnerConfig(BaseModel):
     renderer: Callable
 
 
+def _noop(x):
+    """Quick passthrough for any fetcher/transformer."""
+    return x
+
+
 PIPELINE_CONFIG = [
     # RunnerConfig(
     #     fetcher=swimmi.offline_fetch_single,

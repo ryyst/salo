@@ -26,6 +26,20 @@ def offline_fetch_single() -> RawPageData:
     return RawPageData(room_parts=room_parts, episodes=episodes)
 
 
+def offline_fetch_multi() -> list[RawDayData]:
+    """Mock Timmi data from offline backup."""
+    days = []
+
+    Log.info("Using offline data dumps.")
+
+    for n in range(1, 10):
+        with open(f"swimmi/mocks/{n}.json", "rb") as file:
+            day = json.loads(file.read())
+            days.append(RawDayData(**day))
+
+    return days
+
+
 def fetch_single() -> RawPageData:
     """Fetch all relevant data from Timmi for a single day."""
 
