@@ -1,6 +1,13 @@
 import locale
 from datetime import datetime, timedelta
 
+from swimmi.config import (
+    HALF_POOL_MARKERS,
+    OPEN_HOURS,
+    RENDER_HOURS,
+    SINGLE_LANE_POOLS,
+    WHOLE_POOL_MARKER,
+)
 from swimmi.schemas import RawPageData, RawDayData, PageConfig, PageData, FileData
 from swimmi.utils import (
     get_date,
@@ -15,39 +22,6 @@ from swimmi.utils import (
 
 # Set for easier time strings localisation.
 locale.setlocale(locale.LC_TIME, "fi_FI.utf8")
-
-# Hard-coded open hours of the hall from:
-# https://salo.fi/vapaa-aika-ja-matkailu/liikunta/sisaliikuntapaikat/uimahalli/
-#
-# TODO: Needs some automagicks here.
-OPEN_HOURS = [
-    (6, 21),
-    (6, 21),
-    (12, 20),
-    (6, 21),
-    (6, 21),
-    (11, 18),
-    (11, 18),
-]
-
-# H = "Hyppyallas"
-# K = "Kilpa-allas"
-#
-# Special lanes which actually mark the entire pools as reserved, instead of just one lane.
-WHOLE_POOL_MARKER = ["H", "K"]
-
-# M = "Matala pää"
-# S = "Syvä pää"
-#
-# Special lanes which actually mark all other lanes *except* the other "pää" as reserved
-HALF_POOL_MARKERS = ["M", "S"]
-
-# T = "Terapia-allas"
-# L = "Lasten allas"
-#
-# Pools which don't actually have any designated lanes.
-SINGLE_LANE_POOLS = ["T", "L"]
-
 
 
 def _transform_page_data(data: RawPageData, page_date: datetime) -> PageData:
@@ -195,10 +169,10 @@ def _transform_page_data(data: RawPageData, page_date: datetime) -> PageData:
     is_tomorrow = (today + timedelta(1)).date() == page_date.date()
 
     #
-    # Step 6: Configure some general attributes for the page.
+    # Step 6: Set some general attributes for the page.
     #
     config = PageConfig(
-        hours=list(range(5, 23)),
+        hours=RENDER_HOURS,
         lanes=sum([len(r.get("lanes")) for r in pools]),
         current_day_stamp=page_date.strftime("%A %d.%m.").capitalize(),
         updated_stamp=today.strftime("%d.%m.%Y klo %H:%M"),
