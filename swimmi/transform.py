@@ -10,6 +10,8 @@ from swimmi.config import (
 )
 from swimmi.schemas import RawPageData, RawDayData, PageConfig, PageData, FileData
 from swimmi.utils import (
+    RGB,
+    get_heat_color,
     get_date,
     color_normalize,
     color_darken,
@@ -22,6 +24,53 @@ from swimmi.utils import (
 
 # Set for easier time strings localisation.
 locale.setlocale(locale.LC_TIME, "fi_FI.utf8")
+
+
+def _calculate_hours_heatmap(pools: list[dict]) -> dict[int, RGB]:
+    """Calculate pool "busyness" for each hour."""
+
+    # Initialize empty heatmap with all available hours.
+    heatmap_values = {}
+    for hour in RENDER_HOURS:
+        heatmap_values[hour] = 0
+
+    # Increment heatmaps for each detected hour with custom weights.
+    def calculate_event_heat(event):
+        for h in event["encompassing_hours"]:
+            if not h:
+                continue
+
+            heat = 1
+
+            if h == event["startHour"] and event["startMin"] > 0:
+                heat *= 1 - event["startMin"] / 60
+
+            if h == event["endHour"] and event["endMin"] > 0:
+                heat *= event["endMin"] / 60
+
+            # Lasten allas is not that important
+            if event["lane"] == "L":
+                heat *= 0.75
+
+            # Terapia-allas is nice though
+            if event["lane"] == "T":
+                heat *= 2.25
+
+            heatmap_values[h] += heat  # + is_special_pool
+
+    for p in pools:
+        for e in p["events"]:
+            try:
+                calculate_event_heat(e)
+            except:
+                # Ignore & skip any minor hitches
+                pass
+
+    heatmap_colors: dict[int, RGB] = {}
+    for k, v in heatmap_values.items():
+        heatmap_colors[k] = get_heat_color(v)
+
+    return heatmap_colors
 
 
 def _transform_page_data(data: RawPageData, page_date: datetime) -> PageData:
@@ -108,13 +157,13 @@ def _transform_page_data(data: RawPageData, page_date: datetime) -> PageData:
             "usageRestriction": bool(e.get("usageRestrictionId")),
             "info": get_event_name(e),
             "lane": lane,
-            "laneFull": e.get("roomPartName") if lane not in SINGLE_LANE_POOLS else "",
+            "laneFull": "" if lane in SINGLE_LANE_POOLS else e.get("roomPartName"),
             "startHour": start.get("hours"),
             "startMin": start.get("minutes"),
             "endHour": end.get("hours"),
             "endMin": end.get("minutes"),
             # Lazy maths: ensure we really get every single hour that the event is "part of".
-            "hours": list(
+            "encompassing_hours": list(
                 set(
                     [
                         start.get("hours"),
@@ -156,7 +205,12 @@ def _transform_page_data(data: RawPageData, page_date: datetime) -> PageData:
     pools = list(pool_map.values())
 
     #
-    # Step 5: Pre-calculate navigation links
+    # Step 5: calculate hour heatmap from ready-processed events, so that we get all the fake ones etc.
+    #
+    hours_heatmap = _calculate_hours_heatmap(pools)
+
+    #
+    # Step 6: Pre-calculate navigation links
     #
     # Notice the critical distinction between "today" <-> "page_date" and "yesterday" <-> "prev_date".
     today = datetime.today()
@@ -169,14 +223,14 @@ def _transform_page_data(data: RawPageData, page_date: datetime) -> PageData:
     is_tomorrow = (today + timedelta(1)).date() == page_date.date()
 
     #
-    # Step 6: Set some general attributes for the page.
+    # Step 7: Set some general attributes for the page.
     #
     config = PageConfig(
         hours=RENDER_HOURS,
-        lanes=sum([len(r.get("lanes")) for r in pools]),
+        open_hours=list(range(*OPEN_HOURS[page_date.weekday()])),
+        hours_heatmap=hours_heatmap,
         current_day_stamp=page_date.strftime("%A %d.%m.").capitalize(),
         updated_stamp=today.strftime("%d.%m.%Y klo %H:%M"),
-        open_hours=list(range(*OPEN_HOURS[page_date.weekday()])),
         # Pre-calculated links for rendering the navigation around current day
         prev_date_link="/" if is_tomorrow else "/" + prev_date.strftime("%Y-%m-%d"),
         next_date_link="/" if is_yesterday else "/" + next_date.strftime("%Y-%m-%d"),

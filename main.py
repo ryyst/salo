@@ -14,23 +14,31 @@ class RunnerConfig(BaseModel):
     renderer: Callable
 
 
-def _noop(x):
-    """Quick passthrough for any fetcher/transformer."""
-    return x
+debug_swimmi_single = RunnerConfig(
+    fetcher=swimmi.offline_fetch_single,
+    transformer=swimmi.transform_single,
+    renderer=swimmi.render_html_single,
+)
+
+debug_swimmi_multi = RunnerConfig(
+    fetcher=swimmi.offline_fetch_multi,
+    transformer=swimmi.transform_multi,
+    renderer=swimmi.render_html_multi,
+)
+
+swimmi_multi = RunnerConfig(
+    fetcher=swimmi.fetch_multi,
+    transformer=swimmi.transform_multi,
+    renderer=swimmi.render_html_multi,
+    # renderer=render_stdout,
+)
 
 
+# TODO: Some sort of nice cli input arg setup for dynamically choosing enabled jobs.
 PIPELINE_CONFIG = [
-    # RunnerConfig(
-    #     fetcher=swimmi.offline_fetch_single,
-    #     transformer=swimmi.transform_single,
-    #     renderer=swimmi.render_html_single,
-    # ),
-    RunnerConfig(
-        fetcher=swimmi.fetch_multi,
-        transformer=swimmi.transform_multi,
-        renderer=swimmi.render_html_multi,
-        # renderer=render_stdout,
-    ),
+    # debug_swimmi_single,
+    # debug_swimmi_multi,
+    swimmi_multi,
     # TODO: RunnerConfig(Swimmi 404 page)
     # TODO: RunnerConfig(Salo tapahtumakalenteri)
     # TODO: RunnerConfig(Kirjasto)

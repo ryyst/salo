@@ -22,7 +22,7 @@
         .content {
           max-width: 19rem;
           margin: 0 auto;
-          padding: 0 8px;
+          padding: 0 16px;
         }
 
         h1 { font-size: 1.5rem; }
@@ -180,13 +180,36 @@
           line-height: 0.50rem;
           padding: 8px;
         }
+
+        /* Heatmap indicator hax. */
+        tr::before {
+          content: '';
+          position: absolute;
+        }
+
+        tr.open::before {
+          left: -11px;
+          top: 50%;
+          transform: translateY(-50%);
+          width: 6px;
+          height: 6px;
+          border-radius: 3px;
+          background-color: var(--dot-color);
+          border: 1px solid #111;
+        }
+
+        tr {
+          /* Requried for the above pseudo-element hax. */
+          position: relative;
+        }
+
     </style>
 </head>
 <body>
     {# This fun little thing generates all of the event positions & sizes in the table. #}
     {% macro get_reservation(hour, pool, lane) -%}
       {%- for event in pool.events -%}
-        {%- if hour in event.hours and event.lane == lane -%}
+        {%- if hour in event.encompassing_hours and event.lane == lane -%}
           <div
             class="cell-fill"
             style="background-color: rgb{{event.color}}; border: 1px solid rgb{{event.borderColor}};
@@ -251,7 +274,10 @@
         </tr>
 
         {% for hour in data.config.hours %}
-          <tr class="hour-{{ hour }} {% if hour in data.config.open_hours %}open{% else %}closed{% endif %}">
+          {% set is_open = hour in data.config.open_hours %}
+          {% set heat_color = data.config.hours_heatmap[hour] %}
+
+          <tr {% if is_open %}style="--dot-color: rgb{{ heat_color }};"{% endif %} class="hour-{{ hour }} {% if is_open %}open{% else %}closed{% endif %}">
             <th><div>{{ hour }}</div></th>
             {% for pool in data.pools %}
               {%- for lane in pool.lanes -%}

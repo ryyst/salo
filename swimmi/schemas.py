@@ -27,10 +27,10 @@ class RawDayData(BaseModel):
 
 class PageConfig(BaseModel):
     hours: list
-    lanes: int
+    open_hours: list
+    hours_heatmap: dict
     current_day_stamp: str
     updated_stamp: str
-    open_hours: list
     prev_date_link: str
     next_date_link: str
     is_today: bool
