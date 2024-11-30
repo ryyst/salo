@@ -1,5 +1,3 @@
-import json
-
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 from utils.logging import Log
@@ -15,10 +13,6 @@ jinja = Environment(loader=FileSystemLoader("."), autoescape=select_autoescape()
 def render_html(data, template_path: str):
     template = jinja.get_template(template_path)
     return template.render(data=data)
-
-
-def render_json(data):
-    return json.dumps(data, indent=2)
 
 
 def render_stdout(data):

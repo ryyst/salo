@@ -1,5 +1,6 @@
-from dataclasses import dataclass
 from typing import Callable
+
+from pydantic import BaseModel
 
 from utils.logging import Log
 from utils.renderers import render_stdout
@@ -7,8 +8,7 @@ from utils.renderers import render_stdout
 import swimmi
 
 
-@dataclass
-class RunnerConfig:
+class RunnerConfig(BaseModel):
     fetcher: Callable
     transformer: Callable
     renderer: Callable
@@ -28,7 +28,7 @@ PIPELINE_CONFIG = [
     ),
     # TODO: RunnerConfig(Swimmi 404 page)
     # TODO: RunnerConfig(Salo tapahtumakalenteri)
-    # TODO: RunnerConfig(Paikku)
+    # TODO: RunnerConfig(Kirjasto)
     # TODO: RunnerConfig(etc.)
 ]
 

@@ -1,26 +1,13 @@
 import json
-from dataclasses import dataclass
 
 from swimmi.api import SwimmiAPI
 from utils.logging import Log
 from swimmi.utils import get_epoch
 
+from swimmi.schemas import RawPageData, RawDayData
+
 
 api = SwimmiAPI()
-
-
-@dataclass
-class RawPageData:
-    """Represents the data format we pass on directly from API response."""
-
-    room_parts: list[dict]
-    episodes: list[dict]
-
-
-@dataclass
-class RawDayData:
-    page: RawPageData
-    epoch: int
 
 
 def offline_fetch_single() -> RawPageData:
@@ -61,25 +48,27 @@ def fetch_single() -> RawPageData:
 def fetch_multi() -> list[RawDayData]:
     now = get_epoch()
 
-    today = RawDayData(fetch_single(), now)
+    today = RawDayData(page=fetch_single(), epoch=now)
 
     # Future N days
     future = []
     day_count = 7
     for _ in range(day_count):
         delta_resp = api.change_day_delta(+1, now)
-        new_day = RawDayData(fetch_single(), delta_resp.data.get("newDate", 0))
+        new_day = RawDayData(
+            page=fetch_single(), epoch=delta_resp.data.get("newDate", 0)
+        )
         future.append(new_day)
 
     # Yesterday
     days_since_yesterday = day_count + 1
     delta_resp = api.change_day_delta(-days_since_yesterday, now)
-    yesterday = RawDayData(fetch_single(), delta_resp.data.get("newDate", 0))
+    yesterday = RawDayData(page=fetch_single(), epoch=delta_resp.data.get("newDate", 0))
 
     # The Day Before:
     # Yesterday's "next day" link is always to /, which is not nice in history.
     # Lazy solution: fetch one extra past day so that we start cumulating valid history.
     delta_resp = api.change_day_delta(-1, now)
-    tdb = RawDayData(fetch_single(), delta_resp.data.get("newDate", 0))
+    tdb = RawDayData(page=fetch_single(), epoch=delta_resp.data.get("newDate", 0))
 
     return [tdb, yesterday, today, *future]

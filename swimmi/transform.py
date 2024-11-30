@@ -1,8 +1,7 @@
 import locale
-from dataclasses import dataclass
 from datetime import datetime, timedelta
 
-from swimmi.fetch import RawPageData, RawDayData
+from swimmi.schemas import RawPageData, RawDayData, PageConfig, PageData, FileData
 from swimmi.utils import (
     get_date,
     color_normalize,
@@ -49,33 +48,6 @@ HALF_POOL_MARKERS = ["M", "S"]
 # Pools which don't actually have any designated lanes.
 SINGLE_LANE_POOLS = ["T", "L"]
 
-
-@dataclass
-class PageConfig:
-    hours: list
-    lanes: int
-    current_day_stamp: str
-    updated_stamp: str
-    open_hours: list
-    prev_date_link: str
-    next_date_link: str
-    is_today: bool
-
-
-@dataclass
-class PageData:
-    """Represents the transformed data we pass on to template."""
-
-    pools: list[dict]  # lazy typing
-    config: PageConfig
-
-
-@dataclass
-class FileData:
-    """Represents the transformed data we pass on to template."""
-
-    data: PageData
-    name: str
 
 
 def _transform_page_data(data: RawPageData, page_date: datetime) -> PageData:
@@ -237,7 +209,7 @@ def _transform_page_data(data: RawPageData, page_date: datetime) -> PageData:
         is_today=is_today,
     )
 
-    return PageData(pools, config)
+    return PageData(pools=pools, config=config)
 
 
 def transform_single(data: RawPageData) -> PageData:
@@ -258,6 +230,6 @@ def transform_multi(data: list[RawDayData]) -> list[FileData]:
 
         filename = "index" if page_ymd == today_ymd else page_ymd
 
-        days.append(FileData(page, filename))
+        days.append(FileData(data=page, name=filename))
 
     return days

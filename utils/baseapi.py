@@ -1,13 +1,13 @@
 import urllib.parse
 from typing import Any, Union
+
+from pydantic import BaseModel
 import requests
-from dataclasses import dataclass
 
 from utils.logging import Log
 
 
-@dataclass
-class ApiResponse:
+class ApiResponse(BaseModel):
     data: Any
     status: int
     ok: bool
