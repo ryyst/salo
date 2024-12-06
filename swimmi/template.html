@@ -239,21 +239,21 @@
     {%- endmacro %}
 
     <div class="text-center navigation">
-      <span class="prev"><a href="{{ data.config.prev_date_link }}">< Edel.</a></span>
-      <span class="today">{% if not data.config.is_today %}<a href="/">Palaa</a>{% else %}&nbsp;{% endif %}</span>
-      <span class="next"><a href="{{ data.config.next_date_link }}">Seur. ></a></span>
+      <span class="prev"><a href="{{ data.prev_date_link }}">< Edel.</a></span>
+      <span class="today">{% if not data.is_today %}<a href="/">Palaa</a>{% else %}&nbsp;{% endif %}</span>
+      <span class="next"><a href="{{ data.next_date_link }}">Seur. ></a></span>
     </div>
 
     <div class="content">
 
       <div style="padding: 0.75rem 0;">
-        <h1 class="text-center" style="margin: 0">{{ data.config.page_header }}</h1>
+        <h1 class="text-center" style="margin: 0">{{ data.page_header }}</h1>
         <p class="subtitle text-center" style="margin-top: 0">
-          {{ data.config.current_day_stamp }} <span class="current-time"></span>
+          {{ data.current_day_stamp }} <span class="current-time"></span>
         </p>
       </div>
 
-      {% if data.config.is_today %}
+      {% if data.is_today %}
         <div class="font-p">
           <label><input type="checkbox" id="toggleCheckbox" checked="false" style="margin-left: 16px; margin-right: 8px;">Kaikki</label>
         </div>
@@ -277,9 +277,9 @@
           {%- endfor %}
         </tr>
 
-        {% for hour in data.config.hours %}
-          {% set is_open = hour in data.config.open_hours %}
-          {% set heat_color = data.config.hours_heatmap[hour] %}
+        {% for hour in data.hours %}
+          {% set is_open = hour in data.open_hours %}
+          {% set heat_color = data.hours_heatmap[hour] %}
 
           <tr {% if is_open %}style="--dot-color: rgb{{ heat_color }};"{% endif %} class="hour-{{ hour }} {% if is_open %}open{% else %}closed{% endif %}">
             <th><div>{{ hour }}</div></th>
@@ -310,20 +310,20 @@
 
       <p class="updated text-center">
         Päivitetty
-        {{ data.config.updated_stamp }}
+        {{ data.updated_stamp }}
         -
         <a href="https://salo.fi/vapaa-aika-ja-matkailu/liikunta/sisaliikuntapaikat/uimahalli/" target="_blank">Aukioloajat</a>
       </p>
 
     </div>
 
-    {% if data.config.is_today %}
+    {% if data.is_today %}
       <script>
         // TODO: this is terrible
         function hideOldHours(yes) {
           const recentPast = (new Date()).getHours() - 1;
 
-          for (let i = {{ data.config.hours[0] }}; i < recentPast; i++) {
+          for (let i = {{ data.hours[0] }}; i < recentPast; i++) {
             const elems = document.querySelectorAll(`.hour-${i}`) || [];
             elems.forEach((elem) => {
               elem.style.display = yes ? "none" : "";

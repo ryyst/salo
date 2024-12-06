@@ -6,18 +6,18 @@ from pydantic import BaseModel
 #
 
 
-class RawPageData(BaseModel):
-    """Represents the data format we pass on directly from API response."""
+class RawTimmiData(BaseModel):
+    """Contains all Timmi data for a single page render."""
 
+    epoch: int
     room_parts: list[dict]
     episodes: list[dict]
 
 
-class RawDayData(BaseModel):
-    """Maps page data to the epoch stamp used in fetching."""
+class RawData(BaseModel):
+    """Contains all raw data fetched by Swimmi."""
 
-    page: RawPageData
-    epoch: int
+    pages: list[RawTimmiData]
 
 
 #
@@ -25,7 +25,13 @@ class RawDayData(BaseModel):
 #
 
 
-class PageConfig(BaseModel):
+class RenderData(BaseModel):
+    """Represents the transformed data we pass on to template."""
+
+    epoch: int
+
+    pools: list[dict]  # lazy typing
+
     hours: list[int]
     open_hours: list
     hours_heatmap: dict
@@ -35,17 +41,3 @@ class PageConfig(BaseModel):
     next_date_link: str
     is_today: bool
     page_header: str
-
-
-class PageData(BaseModel):
-    """Represents the transformed data we pass on to template."""
-
-    pools: list[dict]  # lazy typing
-    config: PageConfig
-
-
-class FileData(BaseModel):
-    """Represents the transformed data we pass on to template."""
-
-    data: PageData
-    name: str

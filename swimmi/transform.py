@@ -3,15 +3,13 @@ from datetime import datetime, timedelta
 
 from swimmi.config import SwimmiConfig
 
-from swimmi.schemas import RawPageData, RawDayData, PageConfig, PageData, FileData
+from swimmi.schemas import RawTimmiData, RawData, RenderData
 from swimmi.utils import (
     RGB,
     get_heat_color,
     get_date,
     color_normalize,
     color_darken,
-    get_epoch,
-    ymd,
     hhmm,
     get_event_name,
     get_lane_letter,
@@ -74,10 +72,10 @@ def _calculate_hours_heatmap(
     return heatmap_colors
 
 
-def _transform_page_data(
-    data: RawPageData, page_date: datetime, params: SwimmiConfig
-) -> PageData:
+def _transform_page_data(data: RawTimmiData, params: SwimmiConfig) -> RenderData:
     """Transform all Timmi data into our own format for rendering."""
+    page_date = get_date(data.epoch)
+
     pool_map = {}
 
     WHOLE_POOL_MARKER = params.special_markers.whole_pool_lanes
@@ -231,12 +229,14 @@ def _transform_page_data(
     is_tomorrow = (today + timedelta(1)).date() == page_date.date()
 
     #
-    # Step 7: Set some general attributes for the page.
+    # Step 7: Gather everything for rendering
     #
-    page_config = PageConfig(
+    return RenderData(
+        pools=pools,
         hours=render_hours,
         open_hours=list(range(*params.open_hours[page_date.weekday()])),
         hours_heatmap=hours_heatmap,
+        epoch=data.epoch,
         current_day_stamp=page_date.strftime("%A %d.%m.").capitalize(),
         updated_stamp=today.strftime("%d.%m.%Y klo %H:%M"),
         # Pre-calculated links for rendering the navigation around current day
@@ -246,27 +246,8 @@ def _transform_page_data(
         page_header=params.page_header,
     )
 
-    return PageData(pools=pools, config=page_config)
 
-
-def transform_single(data: RawPageData, params: SwimmiConfig) -> PageData:
-    """Transform a single page, mostly for debugging purposes."""
-    return _transform_page_data(data, datetime.today(), params)
-
-
-def transform_multi(data: list[RawDayData], params: SwimmiConfig) -> list[FileData]:
+def transform_multi(data: RawData, params: SwimmiConfig) -> list[RenderData]:
     """Transform all given pages."""
-    today_ymd = ymd(get_epoch())
 
-    days: list[FileData] = []
-    for day in data:
-        page_date = get_date(day.epoch)
-        page = _transform_page_data(day.page, page_date, params)
-
-        page_ymd = ymd(day.epoch)
-
-        filename = "index" if page_ymd == today_ymd else page_ymd
-
-        days.append(FileData(data=page, name=filename))
-
-    return days
+    return [_transform_page_data(page, params) for page in data.pages]

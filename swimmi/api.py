@@ -1,6 +1,8 @@
 from utils.baseapi import BaseAPI
 from utils.logging import Log
 
+from swimmi.utils import get_epoch
+
 
 class SwimmiAPI(BaseAPI):
     """Timmi API client."""
@@ -29,7 +31,7 @@ class SwimmiAPI(BaseAPI):
 
         return self.request("GET", endpoint, config)
 
-    def change_day_delta(self, delta: int, epoch: int):
+    def change_day_delta(self, delta: int):
         """Move from current day either forward or backwards.
 
         The "current day" state is stored in Timmi's backend according to client's session ID.
@@ -40,19 +42,19 @@ class SwimmiAPI(BaseAPI):
                 "params": {
                     "actionCode": "changeDay",
                     "numberOfDaysToMove": delta,
-                    "_": epoch,
+                    "_": get_epoch(),
                 }
             },
         )
 
-    def get_episodes(self, epoch: int):
+    def get_episodes(self):
         """Episodes AKA lane events."""
         return self._request(
             "calendarAjax.do",
-            {"params": {"actionCode": "getEpisodes", "_": epoch}},
+            {"params": {"actionCode": "getEpisodes", "_": get_epoch()}},
         )
 
-    def get_room_parts(self, epoch: int):
+    def get_room_parts(self):
         """Room parts AKA pool lanes."""
         return self._request(
             "getRoomPartsForCalendarAjax.do",
@@ -62,17 +64,17 @@ class SwimmiAPI(BaseAPI):
                     **self.room_parts_params,
                     "interpreterLangId": 0,
                     "cumulativeMode": 1,
-                    "_": epoch,
+                    "_": get_epoch(),
                 }
             },
         )
 
-    def get_day_schedule(self, epoch: int):
+    def get_day_schedule(self):
         """Combined helper for getting all relevant schedule data for a single day."""
 
         # Note that this sets the backend session to fetch all episodes for given
         # list of rooms in the next step.
-        response = self.get_room_parts(epoch)
+        response = self.get_room_parts()
         if not response:
             Log.warning("No room data received! Aborting...")
             raise Exception("No room data received.")
@@ -80,7 +82,7 @@ class SwimmiAPI(BaseAPI):
         room_parts = response.data if response.ok else []
 
         # Fetch episodes and add events to rooms
-        response2 = self.get_episodes(epoch)
+        response2 = self.get_episodes()
         episodes = response2.data if response2.ok else []
 
         return room_parts, episodes
