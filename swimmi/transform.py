@@ -36,7 +36,7 @@ def _calculate_hours_heatmap(pools: list[dict]) -> dict[int, RGB]:
         heatmap_values[hour] = 0
 
     # Increment heatmaps for each detected hour with custom weights.
-    def calculate_event_heat(event):
+    def calculate_event_heat(event, pool):
         for h in event["encompassing_hours"]:
             if not h:
                 continue
@@ -57,12 +57,16 @@ def _calculate_hours_heatmap(pools: list[dict]) -> dict[int, RGB]:
             if event["lane"] == "T":
                 heat *= 2.25
 
-            heatmap_values[h] += heat  # + is_special_pool
+            # All reservations in Hyppy pool are sketchy and very crowding by nature
+            if event["lane"] in [1, 2, 3, 4, 5, 6] and pool["letter"] == "H":
+                heat *= 1.50
+
+            heatmap_values[h] += heat
 
     for p in pools:
         for e in p["events"]:
             try:
-                calculate_event_heat(e)
+                calculate_event_heat(e, p)
             except:
                 # Ignore & skip any minor hitches
                 pass

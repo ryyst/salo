@@ -319,6 +319,7 @@
 
     {% if data.config.is_today %}
       <script>
+        // TODO: this is terrible
         function hideOldHours(yes) {
           const recentPast = (new Date()).getHours() - 1;
 
