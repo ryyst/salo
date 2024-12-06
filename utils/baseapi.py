@@ -31,11 +31,9 @@ class BaseAPI:
         url = f"{self.base_url}{endpoint}"
         qs = urllib.parse.urlencode(config.get("params", {}))
 
-        Log.info("Calling url: %s%s", url, qs)
-
         try:
             response = self._session.request(method, url, **config)
-            Log.info("Response status: %s", response.status_code)
+            Log.info("[%s] %s%s", response.status_code, url, qs)
 
             data = response.json() if useJSON else response.text
 
@@ -45,5 +43,6 @@ class BaseAPI:
                 ok=200 <= response.status_code < 400,
             )
         except Exception as error:
-            Log.error("Error calling url: %s, %s", url, error)
+            Log.error("[%s] %s%s", 500, url, qs)
+            Log.error("Error: %s", error)
             return ApiResponse(data=str(error), status=500, ok=False)
