@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 from utils.logging import Log
@@ -20,6 +22,9 @@ def render_stdout(data):
 
 
 def save_file(output_file: str, data: str):
+    # Ensure parent dir exists.
+    Path(output_file).parent.mkdir(parents=True, exist_ok=True)
+
     with open(output_file, "w") as file:
         file.write(data)
 
