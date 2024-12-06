@@ -1,18 +1,21 @@
-from swimmi.config import TIMMI
 from utils.baseapi import BaseAPI
+from utils.logging import Log
 
 
 class SwimmiAPI(BaseAPI):
     """Timmi API client."""
 
-    def __init__(self):
-        super().__init__(TIMMI["host"])
+    def __init__(self, host: str, login_params: dict, room_parts_params: dict):
+        super().__init__(host)
+        self.login_params = login_params
+        self.room_parts_params = room_parts_params
 
     def login(self):
+        """Fetch our login token and instantiate the backend session, which is tied to this token."""
         self.request(
             "GET",
             "login.do",
-            {"params": TIMMI["login_params"]},
+            {"params": self.login_params},
             useJSON=False,
         )
 
@@ -56,10 +59,28 @@ class SwimmiAPI(BaseAPI):
             {
                 "params": {
                     "actionCode": "getRoomPartInfos",
-                    **TIMMI["room_parts_params"],
+                    **self.room_parts_params,
                     "interpreterLangId": 0,
                     "cumulativeMode": 1,
                     "_": epoch,
                 }
             },
         )
+
+    def get_day_schedule(self, epoch: int):
+        """Combined helper for getting all relevant schedule data for a single day."""
+
+        # Note that this sets the backend session to fetch all episodes for given
+        # list of rooms in the next step.
+        response = self.get_room_parts(epoch)
+        if not response:
+            Log.warning("No room data received! Aborting...")
+            raise Exception("No room data received.")
+
+        room_parts = response.data if response.ok else []
+
+        # Fetch episodes and add events to rooms
+        response2 = self.get_episodes(epoch)
+        episodes = response2.data if response2.ok else []
+
+        return room_parts, episodes

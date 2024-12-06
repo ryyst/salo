@@ -26,7 +26,7 @@ class RawDayData(BaseModel):
 
 
 class PageConfig(BaseModel):
-    hours: list
+    hours: list[int]
     open_hours: list
     hours_heatmap: dict
     current_day_stamp: str

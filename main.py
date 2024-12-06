@@ -1,69 +1,38 @@
-from typing import Callable
-
-from pydantic import BaseModel
+import sys
 
 from utils.logging import Log
-from utils.renderers import render_stdout
-
-import swimmi
-
-
-class RunnerConfig(BaseModel):
-    fetcher: Callable
-    transformer: Callable
-    renderer: Callable
-
-
-debug_swimmi_single = RunnerConfig(
-    fetcher=swimmi.offline_fetch_single,
-    transformer=swimmi.transform_single,
-    renderer=swimmi.render_html_single,
-)
-
-debug_swimmi_multi = RunnerConfig(
-    fetcher=swimmi.offline_fetch_multi,
-    transformer=swimmi.transform_multi,
-    renderer=swimmi.render_html_multi,
-)
-
-swimmi_multi = RunnerConfig(
-    fetcher=swimmi.fetch_multi,
-    transformer=swimmi.transform_multi,
-    renderer=swimmi.render_html_multi,
-    # renderer=render_stdout,
-)
-
-
-# TODO: Some sort of nice cli input arg setup for dynamically choosing enabled jobs.
-PIPELINE_CONFIG = [
-    # debug_swimmi_single,
-    # debug_swimmi_multi,
-    swimmi_multi,
-    # TODO: RunnerConfig(Swimmi 404 page)
-    # TODO: RunnerConfig(Salo tapahtumakalenteri)
-    # TODO: RunnerConfig(Kirjasto)
-    # TODO: RunnerConfig(etc.)
-]
+from config import RunnerConfig, parse_runner_config
 
 
 def process_runner(runner: RunnerConfig):
+    Log.info("Processing runner %s...", runner.name)
+
     # 1. Fetch raw data.
-    raw = runner.fetcher()
+    raw = runner.fetcher(runner.params)
 
     # 2. Process raw data into renderable form.
-    data = runner.transformer(raw)
+    data = runner.transformer(raw, runner.params)
 
     # 3. Render to file / wherever.
-    runner.renderer(data)
+    runner.renderer(data, runner.params)
 
 
-def main():
-    for runner in PIPELINE_CONFIG:
+def main(runner_configs: list[str]):
+    for config_file in runner_configs:
         try:
+            runner = parse_runner_config(config_file)
+            if not runner:
+                continue
+
             process_runner(runner)
+
         except Exception as e:
-            Log.exception("Error processing pipeline: %s", e, exc_info=e)
-            continue
+            Log.exception("Unexpected error while processing runner: %s", e, exc_info=e)
 
 
-main()
+if __name__ == "__main__":
+    if len(sys.argv) < 2:
+        print("Usage: python main.py <runner1.json> <runner2.json> ...")
+        sys.exit(1)
+
+    main(sys.argv[1:])

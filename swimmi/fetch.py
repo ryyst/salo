@@ -1,5 +1,6 @@
 import json
 
+from swimmi.config import SwimmiConfig
 from swimmi.api import SwimmiAPI
 from utils.logging import Log
 from swimmi.utils import get_epoch
@@ -7,10 +8,7 @@ from swimmi.utils import get_epoch
 from swimmi.schemas import RawPageData, RawDayData
 
 
-api = SwimmiAPI()
-
-
-def offline_fetch_single() -> RawPageData:
+def offline_fetch_single(_: SwimmiConfig) -> RawPageData:
     """Mock Timmi data from offline backup."""
     episodes = []
     room_parts = []
@@ -26,7 +24,7 @@ def offline_fetch_single() -> RawPageData:
     return RawPageData(room_parts=room_parts, episodes=episodes)
 
 
-def offline_fetch_multi() -> list[RawDayData]:
+def offline_fetch_multi(_: SwimmiConfig) -> list[RawDayData]:
     """Mock Timmi data from offline backup."""
     days = []
 
@@ -40,49 +38,45 @@ def offline_fetch_multi() -> list[RawDayData]:
     return days
 
 
-def fetch_single() -> RawPageData:
+def fetch_single(params: SwimmiConfig) -> RawPageData:
     """Fetch all relevant data from Timmi for a single day."""
 
-    # Fetch room parts. Note that this sets the backend session to fetch all
-    # episodes for given rooms in the next step.
-    response = api.get_room_parts(get_epoch())
-    if not response:
-        print("No data received! Aborting...")
-        raise Exception("No room data received.")
+    api = SwimmiAPI(params.host, params.login_params, params.room_parts_params)
 
-    room_parts = response.data if response.ok else []
-
-    # Fetch episodes and add events to rooms
-    response2 = api.get_episodes(get_epoch())
-    episodes = response2.data if response2.ok else []
+    room_parts, episodes = api.get_day_schedule(get_epoch())
 
     return RawPageData(room_parts=room_parts, episodes=episodes)
 
 
-def fetch_multi() -> list[RawDayData]:
+def fetch_multi(params: SwimmiConfig) -> list[RawDayData]:
+    """Fetch all relevant data from Timmi for multiple days."""
     now = get_epoch()
 
-    today = RawDayData(page=fetch_single(), epoch=now)
+    api = SwimmiAPI(params.host, params.login_params, params.room_parts_params)
+
+    def fetch_day():
+        room_parts, episodes = api.get_day_schedule(now)
+        return RawPageData(room_parts=room_parts, episodes=episodes)
+
+    today = RawDayData(page=fetch_day(), epoch=now)
 
     # Future N days
     future = []
     day_count = 7
     for _ in range(day_count):
         delta_resp = api.change_day_delta(+1, now)
-        new_day = RawDayData(
-            page=fetch_single(), epoch=delta_resp.data.get("newDate", 0)
-        )
+        new_day = RawDayData(page=fetch_day(), epoch=delta_resp.data.get("newDate", 0))
         future.append(new_day)
 
     # Yesterday
     days_since_yesterday = day_count + 1
     delta_resp = api.change_day_delta(-days_since_yesterday, now)
-    yesterday = RawDayData(page=fetch_single(), epoch=delta_resp.data.get("newDate", 0))
+    yesterday = RawDayData(page=fetch_day(), epoch=delta_resp.data.get("newDate", 0))
 
     # The Day Before:
     # Yesterday's "next day" link is always to /, which is not nice in history.
     # Lazy solution: fetch one extra past day so that we start cumulating valid history.
     delta_resp = api.change_day_delta(-1, now)
-    tdb = RawDayData(page=fetch_single(), epoch=delta_resp.data.get("newDate", 0))
+    tdb = RawDayData(page=fetch_day(), epoch=delta_resp.data.get("newDate", 0))
 
     return [tdb, yesterday, today, *future]

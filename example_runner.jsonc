@@ -1,0 +1,49 @@
+//
+// Example runner config, which is passed to the main.py as a CLI parameter.
+//
+// Notice: actual configs must be plain .json without comments like this.
+//
+
+{
+  // Human readable runner name.
+  "name": "My offline runner",
+
+  // Runner ETL functions.
+  "fetcher": "swimmi.fetch.offline_multi",
+  "transformer": "swimmi.transform.multi",
+  "renderer": "swimmi.render.html_multi",
+
+  // Which application parses the next `params` object.
+  "parser": "swimmi",
+
+  // Application-specific parameter listing.
+  "params": {
+    "host": "https://asp3.timmi.fi/WebTimmi/",
+
+    // Swimmi wants a collection of GET parameters for choosing the correct hall.
+    "loginParams": {},
+    "roomPartsParams": {},
+
+    // General output settings
+    "pageHeader": "My swimming hall",
+    "renderOutDir": "_out/swimmi/offline/",
+    "renderTemplate": "swimmi/template.html",
+    "renderHours": [5, 22],
+    "openHours": [
+      [6, 21],
+      [6, 21],
+      [12, 20],
+      [6, 21],
+      [6, 21],
+      [11, 18],
+      [11, 18]
+    ],
+
+    // Display settings for special lanes / pools
+    "specialMarkers": {
+      "wholePoolLanes": ["H", "K"],
+      "halfPoolLanes": ["M", "S"],
+      "singleLanePools": ["T", "L"]
+    }
+  }
+}

@@ -1,14 +1,8 @@
 import locale
 from datetime import datetime, timedelta
 
-from swimmi.config import (
-    HALF_POOL_MARKERS,
-    OPEN_HOURS,
-    PAGE_HEADER,
-    RENDER_HOURS,
-    SINGLE_LANE_POOLS,
-    WHOLE_POOL_MARKER,
-)
+from swimmi.config import SwimmiConfig
+
 from swimmi.schemas import RawPageData, RawDayData, PageConfig, PageData, FileData
 from swimmi.utils import (
     RGB,
@@ -27,12 +21,14 @@ from swimmi.utils import (
 locale.setlocale(locale.LC_TIME, "fi_FI.utf8")
 
 
-def _calculate_hours_heatmap(pools: list[dict]) -> dict[int, RGB]:
+def _calculate_hours_heatmap(
+    pools: list[dict], render_hours: list[int]
+) -> dict[int, RGB]:
     """Calculate pool "busyness" for each hour."""
 
     # Initialize empty heatmap with all available hours.
     heatmap_values = {}
-    for hour in RENDER_HOURS:
+    for hour in render_hours:
         heatmap_values[hour] = 0
 
     # Increment heatmaps for each detected hour with custom weights.
@@ -78,9 +74,16 @@ def _calculate_hours_heatmap(pools: list[dict]) -> dict[int, RGB]:
     return heatmap_colors
 
 
-def _transform_page_data(data: RawPageData, page_date: datetime) -> PageData:
+def _transform_page_data(
+    data: RawPageData, page_date: datetime, params: SwimmiConfig
+) -> PageData:
     """Transform all Timmi data into our own format for rendering."""
     pool_map = {}
+
+    WHOLE_POOL_MARKER = params.special_markers.whole_pool_lanes
+    HALF_POOL_MARKERS = params.special_markers.half_pool_lanes
+    SINGLE_LANE_POOLS = params.special_markers.single_lane_pools
+    render_hours = list(range(*params.render_hours))
 
     #
     # Step 1: Build the pool-lane hierarchy from flat Timmi data.
@@ -212,7 +215,7 @@ def _transform_page_data(data: RawPageData, page_date: datetime) -> PageData:
     #
     # Step 5: calculate hour heatmap from ready-processed events, so that we get all the fake ones etc.
     #
-    hours_heatmap = _calculate_hours_heatmap(pools)
+    hours_heatmap = _calculate_hours_heatmap(pools, render_hours)
 
     #
     # Step 6: Pre-calculate navigation links
@@ -230,9 +233,9 @@ def _transform_page_data(data: RawPageData, page_date: datetime) -> PageData:
     #
     # Step 7: Set some general attributes for the page.
     #
-    config = PageConfig(
-        hours=RENDER_HOURS,
-        open_hours=list(range(*OPEN_HOURS[page_date.weekday()])),
+    page_config = PageConfig(
+        hours=render_hours,
+        open_hours=list(range(*params.open_hours[page_date.weekday()])),
         hours_heatmap=hours_heatmap,
         current_day_stamp=page_date.strftime("%A %d.%m.").capitalize(),
         updated_stamp=today.strftime("%d.%m.%Y klo %H:%M"),
@@ -240,25 +243,25 @@ def _transform_page_data(data: RawPageData, page_date: datetime) -> PageData:
         prev_date_link="/" if is_tomorrow else "/" + prev_date.strftime("%Y-%m-%d"),
         next_date_link="/" if is_yesterday else "/" + next_date.strftime("%Y-%m-%d"),
         is_today=is_today,
-        page_header=PAGE_HEADER,
+        page_header=params.page_header,
     )
 
-    return PageData(pools=pools, config=config)
+    return PageData(pools=pools, config=page_config)
 
 
-def transform_single(data: RawPageData) -> PageData:
+def transform_single(data: RawPageData, params: SwimmiConfig) -> PageData:
     """Transform a single page, mostly for debugging purposes."""
-    return _transform_page_data(data, datetime.today())
+    return _transform_page_data(data, datetime.today(), params)
 
 
-def transform_multi(data: list[RawDayData]) -> list[FileData]:
+def transform_multi(data: list[RawDayData], params: SwimmiConfig) -> list[FileData]:
     """Transform all given pages."""
     today_ymd = ymd(get_epoch())
 
     days: list[FileData] = []
     for day in data:
         page_date = get_date(day.epoch)
-        page = _transform_page_data(day.page, page_date)
+        page = _transform_page_data(day.page, page_date, params)
 
         page_ymd = ymd(day.epoch)
 
