@@ -2,7 +2,7 @@ import logging
 import os
 
 formatter = logging.Formatter(
-    "[%(levelname)s] %(asctime)s - %(name)s - %(message)s", datefmt="%H:%M:%S"
+    "%(asctime)s  %(levelname)-5s  %(message)s", datefmt="%H:%M:%S"
 )
 
 _level = logging.DEBUG if os.environ.get("DEBUG") else logging.INFO
