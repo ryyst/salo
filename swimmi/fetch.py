@@ -35,7 +35,7 @@ def offline_fetch_multi(params: SwimmiConfig) -> RawData:
 
     # TODO: Rewrite into nicer automatic caching thingy
     for n in range(1, 10):
-        with open(f"swimmi/_cache/{n}.json", "rb") as file:
+        with open(f"_cache/swimmi/{n}.json", "rb") as file:
             day = json.loads(file.read())
             days.append(RawTimmiData(**day))
 
@@ -60,18 +60,21 @@ def fetch_multi(params: SwimmiConfig) -> RawData:
 
     today = fetch_day()
 
-    # Future N days
     future = []
-    future_count = 7
+    past = []
+
+    past_count = params.past_days_count
+    future_count = params.past_days_count
+
+    # Future N days
     for _ in range(future_count):
         future.append(fetch_next_date(+1))
 
-    # Back to today
-    api.change_day_delta(-future_count)
+    # If we want any past days we'll first reset backend back to `today`, mostly for easier iteration.
+    if past_count > 0 and future_count > 0:
+        api.change_day_delta(-future_count)
 
     # Past N days
-    past = []
-    past_count = 2
     for _ in range(past_count):
         past.append(fetch_next_date(-1))
 

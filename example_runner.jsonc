@@ -24,6 +24,9 @@
     "loginParams": {},
     "roomPartsParams": {},
 
+    "futureDaysCount": 7,
+    "pastDaysCount": 2,
+
     // General output settings
     "pageHeader": "My swimming hall",
     "renderOutDir": "_out/swimmi/offline/",

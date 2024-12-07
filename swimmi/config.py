@@ -22,6 +22,9 @@ class SwimmiConfig(JSONModel):
     room_parts_params: dict
     """Unvalidated collection of GET parameters, varies by env."""
 
+    future_days_count: int
+    past_days_count: int
+
     page_header: str
     render_hours: tuple[int, int]
     render_out_dir: str
