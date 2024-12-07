@@ -42,6 +42,13 @@
           font-size: 0.65rem;
         }
 
+        .red {
+          color: #dd1111;
+        }
+        .orange {
+          color: #f47f17;
+        }
+
         .poolname {
             overflow: hidden;
             text-overflow: ellipsis;
@@ -251,6 +258,9 @@
         <p class="subtitle text-center" style="margin-top: 0">
           {{ data.current_day_stamp }} <span class="current-time"></span>
         </p>
+        {% if data.hours_note %}
+          <p class="orange font-p text-center" style="margin-top: 0.25rem;"><em>{{ data.hours_note }}</em></p>
+        {% endif %}
       </div>
 
       {% if not data.is_closed %}
@@ -295,9 +305,15 @@
           {% endfor %}
         </table>
       {% else %}
-        <div class="text-center">Suljettu</div>
+        <div
+          class="subtitle text-center red"
+          style="font-size: 1rem; padding: 1rem 0;"
+        >
+          <div style="border: 2px dashed #dd1111; border-radius: 8px; padding: 0.5rem 1.5rem; rotate: z -5deg; display: inline-block;">
+            Suljettu
+          </div>
+        </div>
       {% endif %}
-      {{ data.hours_note }}
 
       <div id="reservations" class="font-p">
         <h2>Varaukset</h2>
@@ -313,7 +329,7 @@
         {%- endfor %}
       </div>
 
-      <p class="updated text-center">
+      <p class="updated text-center" style="margin-top: 2rem">
         Päivitetty
         {{ data.updated_stamp }}
         -

@@ -237,9 +237,10 @@ def _transform_page_data(
     #
     # Step 7: Calculate open hours from base config data + extra dynamic hours data from baserow.
     #
+    # TODO: this is terrible
     hours_note = ""
     if page_extra_hours:
-        hours_note = page_extra_hours.get("note", "")
+        hours_note = page_extra_hours.get("note") or "poikkeava aukiolo"
 
         if page_extra_hours.get("closed", False):
             open_hours_range = [0]
@@ -293,12 +294,14 @@ def _transform_extra_open_hours(hours: list[ExtraOpenHours]) -> dict:
                 "from": (base_date + timedelta(seconds=open_from)).hour,
                 "to": (base_date + timedelta(seconds=open_to)).hour,
                 "closed": False,
+                "note": item.note,
             }
         else:
             hour_map[item_ymd] = {
                 "from": None,
                 "to": None,
                 "closed": True,
+                "note": item.note,
             }
 
     return hour_map
