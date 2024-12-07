@@ -6,7 +6,7 @@
 
 {
   // Human readable runner name.
-  "name": "My offline runner",
+  "name": "My runner name",
 
   // Runner ETL functions.
   "fetcher": "swimmi.fetch.offline_multi",
@@ -24,8 +24,15 @@
     "loginParams": {},
     "roomPartsParams": {},
 
+    // Always fetch the current day, but how many surrounding days do we want?
     "futureDaysCount": 7,
     "pastDaysCount": 2,
+
+    // Optional baserow configuration for fetching extra open hours info.
+    "baserow": {
+      "dbToken": "secret",
+      "tableId": "unique-table-id"
+    },
 
     // General output settings
     "pageHeader": "My swimming hall",

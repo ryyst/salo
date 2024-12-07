@@ -1,8 +1,7 @@
-import json
-
 from api.baserow import BaserowAPI
 from swimmi.config import SwimmiConfig
 from swimmi.api import SwimmiAPI
+from utils.cache import cache_output
 from utils.logging import Log
 from swimmi.utils import get_epoch
 
@@ -25,23 +24,7 @@ def _fetch_extra_hours(params: SwimmiConfig) -> list[ExtraOpenHours]:
     return []
 
 
-def offline_fetch_multi(params: SwimmiConfig) -> RawData:
-    """Mock Timmi data from offline backup."""
-    days = []
-
-    extra_hours = _fetch_extra_hours(params)
-
-    Log.info("Using offline data dumps.")
-
-    # TODO: Rewrite into nicer automatic caching thingy
-    for n in range(1, 10):
-        with open(f"_cache/swimmi/{n}.json", "rb") as file:
-            day = json.loads(file.read())
-            days.append(RawTimmiData(**day))
-
-    return RawData(pages=days, extra_open_hours=extra_hours)
-
-
+@cache_output("swimmi_raw", RawData)
 def fetch_multi(params: SwimmiConfig) -> RawData:
     """Fetch all relevant data from Timmi for multiple days."""
     api = SwimmiAPI(params.host, params.login_params, params.room_parts_params)

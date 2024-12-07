@@ -9,6 +9,6 @@ class JSONModel(BaseModel):
     """
 
     class Config:
-        populate_by_name = False
+        populate_by_name = True
         alias_generator = to_camel
         extra = "forbid"
