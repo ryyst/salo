@@ -76,9 +76,6 @@ class RunnerConfig(BaseModel):
 
             data["params"] = parser(**data["params"])
 
-        except FuncRegistryResolveError as err:
-            raise err
-
         except ValidationError as err:
             Log.error("Error parsing application params: %s", err.title)
 
