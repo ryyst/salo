@@ -1,1 +1,8 @@
-/_*/
+# Static output goes here
+/_out/
+
+# Data caches for smoother development go here
+/_cache/
+
+# Keep your secrets by stashing runner configs here!
+/_envs/
