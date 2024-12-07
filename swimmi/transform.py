@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 
 from swimmi.config import SwimmiConfig
 
-from swimmi.schemas import RawTimmiData, RawData, RenderData
+from swimmi.schemas import ExtraOpenHours, RawTimmiData, RawData, RenderData
 from swimmi.utils import (
     RGB,
     get_heat_color,
@@ -13,6 +13,7 @@ from swimmi.utils import (
     hhmm,
     get_event_name,
     get_lane_letter,
+    ymd,
 )
 
 # Set for easier time strings localisation.
@@ -72,8 +73,11 @@ def _calculate_hours_heatmap(
     return heatmap_colors
 
 
-def _transform_page_data(data: RawTimmiData, params: SwimmiConfig) -> RenderData:
+def _transform_page_data(
+    data: RawTimmiData, params: SwimmiConfig, extra_open_hours: dict
+) -> RenderData:
     """Transform all Timmi data into our own format for rendering."""
+
     page_date = get_date(data.epoch)
 
     pool_map = {}
@@ -228,13 +232,36 @@ def _transform_page_data(data: RawTimmiData, params: SwimmiConfig) -> RenderData
     is_yesterday = (today - timedelta(1)).date() == page_date.date()
     is_tomorrow = (today + timedelta(1)).date() == page_date.date()
 
+    page_extra_hours = extra_open_hours.get(ymd(data.epoch), {})
+
     #
-    # Step 7: Gather everything for rendering
+    # Step 7: Calculate open hours from base config data + extra dynamic hours data from baserow.
+    #
+    hours_note = ""
+    if page_extra_hours:
+        hours_note = page_extra_hours.get("note", "")
+
+        if page_extra_hours.get("closed", False):
+            open_hours_range = [0]
+        else:
+            open_hours_range = (
+                page_extra_hours.get("from"),
+                page_extra_hours.get("to"),
+            )
+    else:
+        open_hours_range = params.open_hours[page_date.weekday()]
+
+    open_hours = list(range(*open_hours_range))
+
+    #
+    # Step 8: Gather everything for rendering
     #
     return RenderData(
         pools=pools,
         hours=render_hours,
-        open_hours=list(range(*params.open_hours[page_date.weekday()])),
+        open_hours=open_hours,
+        is_closed=len(open_hours) == 0,
+        hours_note=hours_note,
         hours_heatmap=hours_heatmap,
         epoch=data.epoch,
         current_day_stamp=page_date.strftime("%A %d.%m.").capitalize(),
@@ -247,7 +274,39 @@ def _transform_page_data(data: RawTimmiData, params: SwimmiConfig) -> RenderData
     )
 
 
+def _transform_extra_open_hours(hours: list[ExtraOpenHours]) -> dict:
+    """Handle poikkeusaukioloajat."""
+    hour_map = {}
+
+    # TODO :
+    for item in hours:
+        item_ymd = item.date
+        open_from, open_to = item.open_from, item.open_to
+
+        if not item_ymd:
+            continue
+
+        if open_from and open_to:
+            base_date = datetime.strptime(item_ymd, "%Y-%m-%d")
+
+            hour_map[item_ymd] = {
+                "from": (base_date + timedelta(seconds=open_from)).hour,
+                "to": (base_date + timedelta(seconds=open_to)).hour,
+                "closed": False,
+            }
+        else:
+            hour_map[item_ymd] = {
+                "from": None,
+                "to": None,
+                "closed": True,
+            }
+
+    return hour_map
+
+
 def transform_multi(data: RawData, params: SwimmiConfig) -> list[RenderData]:
     """Transform all given pages."""
 
-    return [_transform_page_data(page, params) for page in data.pages]
+    extra_open_hours = _transform_extra_open_hours(data.extra_open_hours)
+
+    return [_transform_page_data(page, params, extra_open_hours) for page in data.pages]

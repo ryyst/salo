@@ -253,46 +253,51 @@
         </p>
       </div>
 
-      {% if data.is_today %}
-        <div class="font-p">
-          <label><input type="checkbox" id="toggleCheckbox" checked="false" style="margin-left: 16px; margin-right: 8px;">Kaikki</label>
-        </div>
-      {% endif %}
+      {% if not data.is_closed %}
+        {% if data.is_today %}
+          <div class="font-p">
+            <label><input type="checkbox" id="toggleCheckbox" checked="false" style="margin-left: 16px; margin-right: 8px;">Kaikki</label>
+          </div>
+        {% endif %}
 
-      <table class="center text-center">
-        <tr>
-          <th class="empty"></th>
-          {%- for pool in data.pools -%}
-            <th class="poolname" colspan="{{ pool.lanes|length }}">
-              {%- if pool.lanes|length == 1 -%}{{ pool.shortName }}{% else %}{{ pool.name }}{%- endif -%}
-            </th>
-          {%- endfor -%}
-        </tr>
-        <tr>
-          <th class="empty"></th>
-          {% for pool in data.pools -%}
-            {%- for lane in pool.lanes -%}
-              <th class="pool-{{ pool.letter }} lane-{{ lane }}"><div>{{ lane }}</div></th>
+        <table class="center text-center">
+          <tr>
+            <th class="empty"></th>
+            {%- for pool in data.pools -%}
+              <th class="poolname" colspan="{{ pool.lanes|length }}">
+                {%- if pool.lanes|length == 1 -%}{{ pool.shortName }}{% else %}{{ pool.name }}{%- endif -%}
+              </th>
             {%- endfor -%}
-          {%- endfor %}
-        </tr>
-
-        {% for hour in data.hours %}
-          {% set is_open = hour in data.open_hours %}
-          {% set heat_color = data.hours_heatmap[hour] %}
-
-          <tr {% if is_open %}style="--dot-color: rgb{{ heat_color }};"{% endif %} class="hour-{{ hour }} {% if is_open %}open{% else %}closed{% endif %}">
-            <th><div>{{ hour }}</div></th>
-            {% for pool in data.pools %}
+          </tr>
+          <tr>
+            <th class="empty"></th>
+            {% for pool in data.pools -%}
               {%- for lane in pool.lanes -%}
-                <td class="pool-{{ pool.letter }} lane-{{ lane }}">
-                  <div>{{ get_reservation(hour, pool, lane) }}</div>
-                </td>
+                <th class="pool-{{ pool.letter }} lane-{{ lane }}"><div>{{ lane }}</div></th>
               {%- endfor -%}
             {%- endfor %}
           </tr>
-        {% endfor %}
-      </table>
+
+          {% for hour in data.hours %}
+            {% set is_open = hour in data.open_hours %}
+            {% set heat_color = data.hours_heatmap[hour] %}
+
+            <tr {% if is_open %}style="--dot-color: rgb{{ heat_color }};"{% endif %} class="hour-{{ hour }} {% if is_open %}open{% else %}closed{% endif %}">
+              <th><div>{{ hour }}</div></th>
+              {% for pool in data.pools %}
+                {%- for lane in pool.lanes -%}
+                  <td class="pool-{{ pool.letter }} lane-{{ lane }}">
+                    <div>{{ get_reservation(hour, pool, lane) }}</div>
+                  </td>
+                {%- endfor -%}
+              {%- endfor %}
+            </tr>
+          {% endfor %}
+        </table>
+      {% else %}
+        <div class="text-center">Suljettu</div>
+      {% endif %}
+      {{ data.hours_note }}
 
       <div id="reservations" class="font-p">
         <h2>Varaukset</h2>

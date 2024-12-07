@@ -16,9 +16,12 @@ class ApiResponse(BaseModel):
 class BaseAPI:
     """Simple HTTP API wrapper."""
 
-    def __init__(self, base_url: str):
+    def __init__(self, base_url: str, headers: Union[dict, None] = None):
         self._session = requests.Session()
         self._session.headers.update({"Content-Type": "application/json"})
+
+        if headers:
+            self._session.headers.update(headers)
 
         self.base_url = base_url
 
@@ -33,7 +36,7 @@ class BaseAPI:
 
         try:
             response = self._session.request(method, url, **config)
-            Log.info("[%s] %s%s", response.status_code, url, qs)
+            Log.debug("[%s] %s%s", response.status_code, url, qs)
 
             data = response.json() if useJSON else response.text
 

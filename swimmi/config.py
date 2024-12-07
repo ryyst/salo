@@ -1,4 +1,10 @@
+from typing import Optional
 from utils.schema import JSONModel
+
+
+class BaserowConfig(JSONModel):
+    db_token: str
+    table_id: str
 
 
 class MarkerConfig(JSONModel):
@@ -23,3 +29,6 @@ class SwimmiConfig(JSONModel):
 
     open_hours: list[tuple[int, int]]
     special_markers: MarkerConfig
+
+    baserow: Optional[BaserowConfig] = None
+    """Additional hour data is kept in baserow.io."""

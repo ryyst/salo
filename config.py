@@ -96,7 +96,7 @@ class RunnerConfig(BaseModel):
 
 def parse_runner_config(path: str) -> Optional[RunnerConfig]:
     try:
-        Log.info("Parsing runner config: %s...", path)
+        Log.info("Parsing provided runner config file: %s...", path)
         with open(path, "r") as f:
             data = json.load(f)
 

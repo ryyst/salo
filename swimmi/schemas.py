@@ -1,4 +1,19 @@
+from typing import Optional
 from pydantic import BaseModel
+
+from utils.schema import JSONModel
+
+
+class ExtraOpenHours(JSONModel):
+    """Baserow database row type for extra open hours info."""
+
+    id: int
+    order: str
+    date: str
+    open_from: Optional[int] = None
+    open_to: Optional[int] = None
+    note: Optional[str] = None
+    created: str
 
 
 #
@@ -18,6 +33,7 @@ class RawData(BaseModel):
     """Contains all raw data fetched by Swimmi."""
 
     pages: list[RawTimmiData]
+    extra_open_hours: list[ExtraOpenHours]
 
 
 #
@@ -34,6 +50,8 @@ class RenderData(BaseModel):
 
     hours: list[int]
     open_hours: list
+    is_closed: bool
+    hours_note: str
     hours_heatmap: dict
     current_day_stamp: str
     updated_stamp: str

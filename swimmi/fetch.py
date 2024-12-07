@@ -1,25 +1,45 @@
 import json
 
+from api.baserow import BaserowAPI
 from swimmi.config import SwimmiConfig
 from swimmi.api import SwimmiAPI
 from utils.logging import Log
 from swimmi.utils import get_epoch
 
-from swimmi.schemas import RawTimmiData, RawData
+from swimmi.schemas import ExtraOpenHours, RawTimmiData, RawData
 
 
-def offline_fetch_multi(params: SwimmiConfig) -> list[RawData]:
+def _fetch_extra_hours(params: SwimmiConfig) -> list[ExtraOpenHours]:
+    try:
+        baserow = params.baserow
+        if baserow:
+            api = BaserowAPI(baserow.db_token)
+            data = api.get_table_rows(baserow.table_id)
+
+            rows = [ExtraOpenHours(**r) for r in data.results]
+            return rows
+    except Exception as err:
+        Log.warning("Tried to get extra hours data but failed: %s", err)
+        pass
+
+    return []
+
+
+def offline_fetch_multi(params: SwimmiConfig) -> RawData:
     """Mock Timmi data from offline backup."""
     days = []
 
+    extra_hours = _fetch_extra_hours(params)
+
     Log.info("Using offline data dumps.")
 
+    # TODO: Rewrite into nicer automatic caching thingy
     for n in range(1, 10):
-        with open(f"swimmi/mocks/{n}.json", "rb") as file:
+        with open(f"swimmi/_cache/{n}.json", "rb") as file:
             day = json.loads(file.read())
-            days.append(RawData(**day))
+            days.append(RawTimmiData(**day))
 
-    return days
+    return RawData(pages=days, extra_open_hours=extra_hours)
 
 
 def fetch_multi(params: SwimmiConfig) -> RawData:
@@ -57,4 +77,5 @@ def fetch_multi(params: SwimmiConfig) -> RawData:
 
     return RawData(
         pages=[*past, today, *future],
+        extra_open_hours=_fetch_extra_hours(params),
     )
