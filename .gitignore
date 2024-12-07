@@ -6,3 +6,8 @@
 
 # Keep your secrets by stashing runner configs here!
 /_envs/
+
+# Other
+.venv
+__pycache__
+cron.sh
