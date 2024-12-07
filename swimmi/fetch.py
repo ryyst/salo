@@ -47,7 +47,7 @@ def fetch_multi(params: SwimmiConfig) -> RawData:
     past = []
 
     past_count = params.past_days_count
-    future_count = params.past_days_count
+    future_count = params.future_days_count
 
     # Future N days
     for _ in range(future_count):
