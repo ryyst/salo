@@ -10,4 +10,5 @@ def fetch_schedule(params: LibbyConfig) -> RawData:
 
     response = api.get_open_hours(params.library_id)
 
+    # TODO
     return RawData(data=response.data["data"])
