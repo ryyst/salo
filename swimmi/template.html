@@ -339,10 +339,26 @@
     </div>
 
     {% if data.is_today %}
+      <div id="timetracker" style="border-top: 1px solid #ff0000bb; width: 100%; left: 0; position: absolute;" />
+
       <script>
+        const now = new Date();
+
+        function trackNow() {
+
+          const tracker = document.querySelector(`#timetracker`);
+          const currentRow = document.querySelector(`.hour-${now.getHours()}`);
+          currentRow.append(tracker)
+          tracker.style.top = `${now.getMinutes() / 60 * 100}%`
+        }
+
+        trackNow();
+        window.setInterval(trackNow, 60 * 5 * 1000);
+
+
         // TODO: this is terrible
         function hideOldHours(yes) {
-          const recentPast = (new Date()).getHours() - 1;
+          const recentPast = now.getHours() - 1;
 
           for (let i = {{ data.hours[0] }}; i < recentPast; i++) {
             const elems = document.querySelectorAll(`.hour-${i}`) || [];
