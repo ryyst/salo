@@ -66,16 +66,14 @@
           color: #6c757d;
           font-weight: 500;
           margin-bottom: 0.5rem;
+          font-size: 0.9rem;
         }
 
         .event-location {
           color: #6c757d;
           font-style: italic;
-          margin-bottom: 0.5rem;
-        }
-
-        .event-excerpt {
-          margin-bottom: 1rem;
+          font-size: 0.85rem;
+          margin-bottom: 0.75rem;
         }
 
         .event-categories {
@@ -87,9 +85,9 @@
         .category {
           background: #e9ecef;
           color: #495057;
-          padding: 0.25rem 0.75rem;
+          padding: 0.20rem 0.5rem;
           border-radius: 20px;
-          font-size: 0.875rem;
+          font-size: 0.6rem;
         }
 
         .event-image {
@@ -98,6 +96,7 @@
           object-fit: cover;
           border-radius: 8px;
           flex-shrink: 0;
+          align-self: center;
         }
 
         .event-content {
@@ -277,7 +276,9 @@
           <div class="event-dates">
             {{ event.days_remaining }} päivää jäljellä
             <span class="event-start-date">
-              ({{ event.start_date_short }} - {{ event.end_date_short }})
+              {% if event.excerpt %}
+                ({{ event.excerpt }})
+              {% endif %}
             </span>
           </div>
         </div>
@@ -319,10 +320,8 @@
               {{ event.days_until_start }} päivän päästä
             {% endif %}
             <span class="event-start-date">
-              {% if event.start_date_short == event.end_date_short %}
-                ({{ event.start_date_short }})
-              {% else %}
-                ({{ event.start_date_short }} - {{ event.end_date_short }})
+              {% if event.excerpt %}
+                ({{ event.excerpt }})
               {% endif %}
             </span>
           </div>
@@ -333,10 +332,6 @@
             <span class="event-distance">({{ event.distance_km }}km)</span>
             {% endif %}
           </div>
-          {% endif %}
-
-          {% if event.excerpt %}
-          <div class="event-excerpt">{{ event.excerpt }}</div>
           {% endif %}
 
           {% if event.categories %}
