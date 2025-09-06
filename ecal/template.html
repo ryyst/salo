@@ -116,16 +116,57 @@
           color: #6c757d;
           font-size: 2rem;
         }
+
+        .filters {
+          display: flex;
+          justify-content: center;
+          gap: 0.5rem;
+          margin-top: 1rem;
+          flex-wrap: wrap;
+        }
+
+        .filter-btn {
+          background: #e9ecef;
+          border: none;
+          padding: 0.5rem 1rem;
+          border-radius: 20px;
+          cursor: pointer;
+          font-size: 0.875rem;
+          transition: background-color 0.2s;
+        }
+
+        .filter-btn:hover {
+          background: #dee2e6;
+        }
+
+        .filter-btn.active {
+          background: #007bff;
+          color: white;
+        }
+
+        .event-distance {
+          color: #28a745;
+          font-size: 0.8rem;
+          font-weight: 500;
+        }
     </style>
 </head>
 <body>
   <div class="header">
     <h1>{{ page_header }}</h1>
+
+    <!-- Distance filters -->
+    <div class="filters">
+      <button class="filter-btn active" data-distance="all">Kaikki</button>
+      <button class="filter-btn" data-distance="close">Keskusta (&lt;5km)</button>
+      <button class="filter-btn" data-distance="nearby">Lähistö (&lt;10km)</button>
+      <button class="filter-btn" data-distance="regional">Automatka (&lt;50km)</button>
+    </div>
   </div>
 
   <div class="events">
     {% for event in data %}
-    <div class="event" style="border-left: 4px solid {% if 'Kulttuuri' in event.categories %}#e83e8c{% elif 'Urheilu' in event.categories %}#28a745{% elif 'Musiikki' in event.categories %}#6610f2{% elif 'Ilmainen' in event.categories %}#20c997{% else %}#6c757d{% endif %};">
+    <div class="event" data-distance="{{ event.distance_category }}" style="border-left: 4px solid {% if 'Kulttuuri' in event.categories %}#e83e8c{% elif 'Urheilu' in event.categories %}#28a745{% elif 'Musiikki' in event.categories %}#6610f2{% elif 'Ilmainen' in event.categories %}#20c997{% else %}#6c757d{% endif %};">
       <!-- Image or placeholder -->
       {% if event.featured_image %}
         <img src="{{ event.featured_image }}" alt="{{ event.title }}" class="event-image">
@@ -152,7 +193,11 @@
         </div>
 
         {% if event.location %}
-        <div class="event-location">📍 {{ event.location }}</div>
+        <div class="event-location">📍 {{ event.location }}
+          {% if event.distance_km > 0 %}
+          <span class="event-distance">({{ event.distance_km }}km)</span>
+          {% endif %}
+        </div>
         {% endif %}
 
         {% if event.excerpt %}
@@ -170,5 +215,27 @@
     </div>
     {% endfor %}
   </div>
+
+  <script>
+    // Simple distance filtering with minimal JavaScript
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        // Update active button
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+
+        const selectedDistance = this.getAttribute('data-distance');
+        const events = document.querySelectorAll('.event');
+
+        events.forEach(event => {
+          if (selectedDistance === 'all' || event.getAttribute('data-distance') === selectedDistance) {
+            event.style.display = 'flex';
+          } else {
+            event.style.display = 'none';
+          }
+        });
+      });
+    });
+  </script>
 </body>
 </html>
