@@ -1,10 +1,10 @@
-from .config import EcalConfig
+from .config import ToriConfig
 from .fetch import fetch_events
 from .render import render_events_html
 from .transform import transform_events
 
 
-EVENT_CALENDAR_REGISTRY = {
+TORI_REGISTRY = {
     "fetch": {
         "events": fetch_events,
     },
@@ -15,6 +15,6 @@ EVENT_CALENDAR_REGISTRY = {
         "html_events": render_events_html,
     },
     "parser": {
-        "base": EcalConfig,
+        "base": ToriConfig,
     },
 }

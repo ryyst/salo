@@ -2,7 +2,7 @@ from datetime import datetime
 import math
 
 from .schema import RawData
-from .config import EcalConfig
+from .config import ToriConfig
 
 # Salo city center coordinates
 SALO_CENTER_LAT = 60.384041
@@ -40,7 +40,7 @@ def categorize_distance(distance_km):
         return "far"  # >=50km
 
 
-def transform_events(data: RawData, params: EcalConfig):
+def transform_events(data: RawData, params: ToriConfig):
     events = []
     now = datetime.now()
 

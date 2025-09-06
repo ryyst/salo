@@ -1,12 +1,12 @@
 from utils.cache import cache_output
 
 from .api import EventCalendarAPI
-from .config import EcalConfig
+from .config import ToriConfig
 from .schema import RawData
 
 
-@cache_output("ecal_raw", RawData)
-def fetch_events(params: EcalConfig) -> RawData:
+@cache_output("tori_raw", RawData)
+def fetch_events(params: ToriConfig) -> RawData:
     api = EventCalendarAPI(params.api_base_url)
 
     response = api.get_events()
