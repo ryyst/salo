@@ -239,7 +239,7 @@
           <div class="event-dates">
             {{ event.days_remaining }} päivää jäljellä
             <span class="event-start-date">
-              ({{ event.start_date }} - {{ event.end_date }})
+              ({{ event.start_date_short }} - {{ event.end_date_short }})
             </span>
           </div>
         </div>
@@ -274,10 +274,10 @@
           </div>
 
           <div class="event-dates">
-            {% if event.start_date == event.end_date %}
-              {{ event.start_date }}
+            {% if event.start_date_short == event.end_date_short %}
+              {{ event.start_date_short }}
             {% else %}
-              {{ event.start_date }} - {{ event.end_date }}
+              {{ event.start_date_short }} - {{ event.end_date_short }}
             {% endif %}
           </div>
 

@@ -50,6 +50,8 @@ def transform_events(data: RawData, params: EcalConfig):
         end_datetime = datetime.fromtimestamp(event["endDate"])
         start_date = start_datetime.strftime("%d.%m.%Y")
         end_date = end_datetime.strftime("%d.%m.%Y")
+        start_date_short = start_datetime.strftime("%d.%m.")
+        end_date_short = end_datetime.strftime("%d.%m.")
 
         # Calculate duration and determine if it's ongoing
         duration_days = (end_datetime - start_datetime).days
@@ -87,6 +89,8 @@ def transform_events(data: RawData, params: EcalConfig):
                 "excerpt": event.get("excerpt", ""),
                 "start_date": start_date,
                 "end_date": end_date,
+                "start_date_short": start_date_short,
+                "end_date_short": end_date_short,
                 "location": location,
                 "categories": categories,
                 "permalink": event.get("permalink", ""),
