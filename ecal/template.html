@@ -149,6 +149,54 @@
           font-size: 0.8rem;
           font-weight: 500;
         }
+
+        /* Section styling */
+        .section {
+          margin-bottom: 3rem;
+        }
+
+        .section-title {
+          font-size: 1.5rem;
+          font-weight: bold;
+          color: #495057;
+          padding-bottom: 1rem;
+          max-width: 800px;
+          margin: 0 auto;
+        }
+
+        /* Compressed ongoing event styles */
+        .event.ongoing {
+          padding: 1rem;
+          margin-bottom: 1rem;
+        }
+
+        .event.ongoing .event-image {
+          width: 60px;
+          height: 60px;
+        }
+
+        .event.ongoing .event-placeholder {
+          width: 60px;
+          height: 60px;
+          font-size: 1.5rem;
+        }
+
+        .event.ongoing .event-title {
+          font-size: 1rem;
+          margin-bottom: 0.25rem;
+        }
+
+        .event.ongoing .event-dates {
+          font-size: 0.8rem;
+          margin-bottom: 0;
+        }
+
+        .event-start-date {
+          color: #adb5bd;
+          font-size: 0.7rem;
+          font-weight: normal;
+          margin-top: 0.25rem;
+        }
     </style>
 </head>
 <body>
@@ -164,57 +212,100 @@
     </div>
   </div>
 
-  <div class="events">
-    {% for event in data %}
-    <div class="event" data-distance="{{ event.distance_category }}" style="border-left: 4px solid {% if 'Kulttuuri' in event.categories %}#e83e8c{% elif 'Urheilu' in event.categories %}#28a745{% elif 'Musiikki' in event.categories %}#6610f2{% elif 'Ilmainen' in event.categories %}#20c997{% else %}#6c757d{% endif %};">
-      <!-- Image or placeholder -->
-      {% if event.featured_image %}
-        <img src="{{ event.featured_image }}" alt="{{ event.title }}" class="event-image">
-      {% else %}
-        <div class="event-placeholder">📅</div>
-      {% endif %}
-
-      <!-- Event content -->
-      <div class="event-content">
-        <div class="event-title">
-          {% if event.permalink %}
-            <a href="{{ event.permalink }}" target="_blank">{{ event.title }}</a>
-          {% else %}
-            {{ event.title }}
-          {% endif %}
-        </div>
-
-        <div class="event-dates">
-          {% if event.start_date == event.end_date %}
-            {{ event.start_date }}
-          {% else %}
-            {{ event.start_date }} - {{ event.end_date }}
-          {% endif %}
-        </div>
-
-        {% if event.location %}
-        <div class="event-location">📍 {{ event.location }}
-          {% if event.distance_km > 0 %}
-          <span class="event-distance">({{ event.distance_km }}km)</span>
-          {% endif %}
-        </div>
+  <!-- Ongoing long-running events section -->
+  {% if data.ongoing %}
+  <div class="section">
+    <h2 class="section-title">Meneillään</h2>
+    <div class="events">
+      {% for event in data.ongoing %}
+      <div class="event ongoing" data-distance="{{ event.distance_category }}" style="border-left: 4px solid {% if 'Kulttuuri' in event.categories %}#e83e8c{% elif 'Urheilu' in event.categories %}#28a745{% elif 'Musiikki' in event.categories %}#6610f2{% elif 'Ilmainen' in event.categories %}#20c997{% else %}#6c757d{% endif %};">
+        <!-- Small image or placeholder -->
+        {% if event.featured_image %}
+          <img src="{{ event.featured_image }}" alt="{{ event.title }}" class="event-image">
+        {% else %}
+          <div class="event-placeholder">📅</div>
         {% endif %}
 
-        {% if event.excerpt %}
-        <div class="event-excerpt">{{ event.excerpt }}</div>
-        {% endif %}
+        <!-- Compressed event content -->
+        <div class="event-content">
+          <div class="event-title">
+            {% if event.permalink %}
+              <a href="{{ event.permalink }}" target="_blank">{{ event.title }}</a>
+            {% else %}
+              {{ event.title }}
+            {% endif %}
+          </div>
 
-        {% if event.categories %}
-        <div class="event-categories">
-          {% for category in event.categories %}
-          <span class="category">{{ category }}</span>
-          {% endfor %}
+          <div class="event-dates">
+            {{ event.days_remaining }} päivää jäljellä
+            <span class="event-start-date">
+              ({{ event.start_date }} - {{ event.end_date }})
+            </span>
+          </div>
         </div>
-        {% endif %}
       </div>
+      {% endfor %}
     </div>
-    {% endfor %}
   </div>
+  {% endif %}
+
+  <!-- Upcoming events section -->
+  {% if data.upcoming %}
+  <div class="section">
+    <h2 class="section-title">Tulevat</h2>
+    <div class="events">
+      {% for event in data.upcoming %}
+      <div class="event" data-distance="{{ event.distance_category }}" style="border-left: 4px solid {% if 'Kulttuuri' in event.categories %}#e83e8c{% elif 'Urheilu' in event.categories %}#28a745{% elif 'Musiikki' in event.categories %}#6610f2{% elif 'Ilmainen' in event.categories %}#20c997{% else %}#6c757d{% endif %};">
+        <!-- Image or placeholder -->
+        {% if event.featured_image %}
+          <img src="{{ event.featured_image }}" alt="{{ event.title }}" class="event-image">
+        {% else %}
+          <div class="event-placeholder">📅</div>
+        {% endif %}
+
+        <!-- Full event content -->
+        <div class="event-content">
+          <div class="event-title">
+            {% if event.permalink %}
+              <a href="{{ event.permalink }}" target="_blank">{{ event.title }}</a>
+            {% else %}
+              {{ event.title }}
+            {% endif %}
+          </div>
+
+          <div class="event-dates">
+            {% if event.start_date == event.end_date %}
+              {{ event.start_date }}
+            {% else %}
+              {{ event.start_date }} - {{ event.end_date }}
+            {% endif %}
+          </div>
+
+          {% if event.location %}
+          <div class="event-location">📍 {{ event.location }}
+            {% if event.distance_km > 0 %}
+            <span class="event-distance">({{ event.distance_km }}km)</span>
+            {% endif %}
+          </div>
+          {% endif %}
+
+          {% if event.excerpt %}
+          <div class="event-excerpt">{{ event.excerpt }}</div>
+          {% endif %}
+
+          {% if event.categories %}
+          <div class="event-categories">
+            {% for category in event.categories %}
+            <span class="category">{{ category }}</span>
+            {% endfor %}
+          </div>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
 
   <script>
     // Simple distance filtering with minimal JavaScript
