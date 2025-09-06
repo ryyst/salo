@@ -218,7 +218,7 @@
     <h2 class="section-title">Meneillään</h2>
     <div class="events">
       {% for event in data.ongoing %}
-      <div class="event ongoing" data-distance="{{ event.distance_category }}" style="border-left: 4px solid {% if 'Kulttuuri' in event.categories %}#e83e8c{% elif 'Urheilu' in event.categories %}#28a745{% elif 'Musiikki' in event.categories %}#6610f2{% elif 'Ilmainen' in event.categories %}#20c997{% else %}#6c757d{% endif %};">
+      <div class="event ongoing" data-distance="{{ event.distance_category }}" data-distance-km="{{ event.distance_km }}" style="border-left: 4px solid {% if 'Kulttuuri' in event.categories %}#e83e8c{% elif 'Urheilu' in event.categories %}#28a745{% elif 'Musiikki' in event.categories %}#6610f2{% elif 'Ilmainen' in event.categories %}#20c997{% else %}#6c757d{% endif %};">
         <!-- Small image or placeholder -->
         {% if event.featured_image %}
           <img src="{{ event.featured_image }}" alt="{{ event.title }}" class="event-image">
@@ -255,7 +255,7 @@
     <h2 class="section-title">Tulevat</h2>
     <div class="events">
       {% for event in data.upcoming %}
-      <div class="event" data-distance="{{ event.distance_category }}" style="border-left: 4px solid {% if 'Kulttuuri' in event.categories %}#e83e8c{% elif 'Urheilu' in event.categories %}#28a745{% elif 'Musiikki' in event.categories %}#6610f2{% elif 'Ilmainen' in event.categories %}#20c997{% else %}#6c757d{% endif %};">
+      <div class="event" data-distance="{{ event.distance_category }}" data-distance-km="{{ event.distance_km }}" style="border-left: 4px solid {% if 'Kulttuuri' in event.categories %}#e83e8c{% elif 'Urheilu' in event.categories %}#28a745{% elif 'Musiikki' in event.categories %}#6610f2{% elif 'Ilmainen' in event.categories %}#20c997{% else %}#6c757d{% endif %};">
         <!-- Image or placeholder -->
         {% if event.featured_image %}
           <img src="{{ event.featured_image }}" alt="{{ event.title }}" class="event-image">
@@ -308,7 +308,7 @@
   {% endif %}
 
   <script>
-    // Simple distance filtering with minimal JavaScript
+    // Inclusive distance filtering with minimal JavaScript
     document.querySelectorAll('.filter-btn').forEach(btn => {
       btn.addEventListener('click', function() {
         // Update active button
@@ -319,11 +319,20 @@
         const events = document.querySelectorAll('.event');
 
         events.forEach(event => {
-          if (selectedDistance === 'all' || event.getAttribute('data-distance') === selectedDistance) {
-            event.style.display = 'flex';
-          } else {
-            event.style.display = 'none';
+          const distanceKm = parseFloat(event.getAttribute('data-distance-km')) || 0;
+          let shouldShow = false;
+
+          if (selectedDistance === 'all') {
+            shouldShow = true;
+          } else if (selectedDistance === 'close' && distanceKm <= 5) {
+            shouldShow = true;
+          } else if (selectedDistance === 'nearby' && distanceKm <= 10) {
+            shouldShow = true;
+          } else if (selectedDistance === 'regional' && distanceKm <= 50) {
+            shouldShow = true;
           }
+
+          event.style.display = shouldShow ? 'flex' : 'none';
         });
       });
     });
