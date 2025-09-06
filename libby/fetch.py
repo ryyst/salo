@@ -1,7 +1,8 @@
-from libby.api import LibbyAPI
-from libby.config import LibbyConfig
-from libby.schema import RawData
 from utils.cache import cache_output
+
+from .api import LibbyAPI
+from .config import LibbyConfig
+from .schema import RawData
 
 
 @cache_output("libby_raw", RawData)

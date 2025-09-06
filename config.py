@@ -3,17 +3,19 @@ from typing import Callable, Any, Type, Optional
 
 from pydantic import BaseModel, ValidationError, model_validator
 
-from libby import LIBBY_REGISTRY
 from utils.logging import Log
 from utils.renderers import render_stdout
 from utils.schema import JSONModel
 
+from ecal import EVENT_CALENDAR_REGISTRY
+from libby import LIBBY_REGISTRY
 from swimmi import SWIMMI_REGISTRY
 
 
 FUNCTION_REGISTRY = {
     "swimmi": SWIMMI_REGISTRY,
     "libby": LIBBY_REGISTRY,
+    "ecal": EVENT_CALENDAR_REGISTRY,
     "utils": {"render": {"stdout": render_stdout}},
     # etc.
 }

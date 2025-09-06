@@ -1,0 +1,64 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kirjaston aukiolo</title>
+    <style>
+        html {
+          font-family: Calibri, Arial, sans-serif;
+          font-size: 24px;
+
+          background-color: #e5e5e5;
+          color: #111;
+
+          box-sizing: border-box;
+        }
+        body {
+          margin: 0;
+          padding-top: 2rem;
+        }
+
+        table {
+          border-collapse: collapse;
+        }
+
+        .content {
+          max-width: 19rem;
+          margin: 0 auto;
+          padding: 0 16px;
+        }
+
+
+        .status {
+          text-align: center;
+        }
+
+
+        td, th {
+          padding: 4px 16px;
+          font-size: 0.75rem;
+        }
+
+
+    </style>
+</head>
+<body>
+  <div class="content">
+    <table class="content">
+      <thead>
+        <tr>
+          <th>Päivä</th>
+          <th>Avoinna</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for event in data %}
+          <pre>{{ event }}</pre>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</body>
+</html>
