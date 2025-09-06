@@ -11,7 +11,6 @@ def _read_json_from_file(cache_file: str) -> Optional[str]:
         with open(cache_file, "r") as f:
             return json.load(f)
     except Exception as e:
-        Log.warning(f"Error reading cached file {cache_file}: {e}")
         return None
 
 
