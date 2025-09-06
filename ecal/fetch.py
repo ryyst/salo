@@ -6,8 +6,8 @@ from .schema import RawData
 
 
 @cache_output("ecal_raw", RawData)
-def fetch_events(_: EcalConfig) -> RawData:
-    api = EventCalendarAPI()
+def fetch_events(params: EcalConfig) -> RawData:
+    api = EventCalendarAPI(params.api_base_url)
 
     response = api.get_events()
 

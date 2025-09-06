@@ -1,64 +1,174 @@
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kirjaston aukiolo</title>
+    <title>{{ page_header }}</title>
     <style>
         html {
           font-family: Calibri, Arial, sans-serif;
-          font-size: 24px;
-
-          background-color: #e5e5e5;
-          color: #111;
-
+          font-size: 18px;
+          background-color: #f8f9fa;
+          color: #212529;
           box-sizing: border-box;
         }
         body {
           margin: 0;
-          padding-top: 2rem;
+          padding: 1rem;
+          line-height: 1.5;
         }
 
-        table {
-          border-collapse: collapse;
-        }
-
-        .content {
-          max-width: 19rem;
-          margin: 0 auto;
-          padding: 0 16px;
-        }
-
-
-        .status {
+        .header {
           text-align: center;
+          margin-bottom: 2rem;
+          padding-bottom: 1rem;
+          border-bottom: 2px solid #dee2e6;
         }
 
-
-        td, th {
-          padding: 4px 16px;
-          font-size: 0.75rem;
+        .header h1 {
+          color: #495057;
+          margin: 0;
         }
 
+        .events {
+          max-width: 800px;
+          margin: 0 auto;
+        }
 
+        .event {
+          background: white;
+          margin-bottom: 1.5rem;
+          padding: 1.5rem;
+          border-radius: 8px;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+          display: flex;
+          gap: 1rem;
+        }
+
+        .event-title {
+          font-size: 1.25rem;
+          font-weight: bold;
+          margin-bottom: 0.5rem;
+          color: #212529;
+        }
+
+        .event-title a {
+          color: #007bff;
+          text-decoration: none;
+        }
+
+        .event-title a:hover {
+          text-decoration: underline;
+        }
+
+        .event-dates {
+          color: #6c757d;
+          font-weight: 500;
+          margin-bottom: 0.5rem;
+        }
+
+        .event-location {
+          color: #6c757d;
+          font-style: italic;
+          margin-bottom: 0.5rem;
+        }
+
+        .event-excerpt {
+          margin-bottom: 1rem;
+        }
+
+        .event-categories {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 0.5rem;
+        }
+
+        .category {
+          background: #e9ecef;
+          color: #495057;
+          padding: 0.25rem 0.75rem;
+          border-radius: 20px;
+          font-size: 0.875rem;
+        }
+
+        .event-image {
+          width: 120px;
+          height: 120px;
+          object-fit: cover;
+          border-radius: 8px;
+          flex-shrink: 0;
+        }
+
+        .event-content {
+          flex: 1;
+        }
+
+        .event-placeholder {
+          width: 120px;
+          height: 120px;
+          background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+          border-radius: 8px;
+          flex-shrink: 0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: #6c757d;
+          font-size: 2rem;
+        }
     </style>
 </head>
 <body>
-  <div class="content">
-    <table class="content">
-      <thead>
-        <tr>
-          <th>Päivä</th>
-          <th>Avoinna</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for event in data %}
-          <pre>{{ event }}</pre>
-        {% endfor %}
-      </tbody>
-    </table>
+  <div class="header">
+    <h1>{{ page_header }}</h1>
+  </div>
+
+  <div class="events">
+    {% for event in data %}
+    <div class="event" style="border-left: 4px solid {% if 'Kulttuuri' in event.categories %}#e83e8c{% elif 'Urheilu' in event.categories %}#28a745{% elif 'Musiikki' in event.categories %}#6610f2{% elif 'Ilmainen' in event.categories %}#20c997{% else %}#6c757d{% endif %};">
+      <!-- Image or placeholder -->
+      {% if event.featured_image %}
+        <img src="{{ event.featured_image }}" alt="{{ event.title }}" class="event-image">
+      {% else %}
+        <div class="event-placeholder">📅</div>
+      {% endif %}
+
+      <!-- Event content -->
+      <div class="event-content">
+        <div class="event-title">
+          {% if event.permalink %}
+            <a href="{{ event.permalink }}" target="_blank">{{ event.title }}</a>
+          {% else %}
+            {{ event.title }}
+          {% endif %}
+        </div>
+
+        <div class="event-dates">
+          {% if event.start_date == event.end_date %}
+            {{ event.start_date }}
+          {% else %}
+            {{ event.start_date }} - {{ event.end_date }}
+          {% endif %}
+        </div>
+
+        {% if event.location %}
+        <div class="event-location">📍 {{ event.location }}</div>
+        {% endif %}
+
+        {% if event.excerpt %}
+        <div class="event-excerpt">{{ event.excerpt }}</div>
+        {% endif %}
+
+        {% if event.categories %}
+        <div class="event-categories">
+          {% for category in event.categories %}
+          <span class="category">{{ category }}</span>
+          {% endfor %}
+        </div>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
   </div>
 </body>
 </html>
