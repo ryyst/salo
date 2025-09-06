@@ -258,7 +258,7 @@
       <div class="event ongoing" data-distance="{{ event.distance_category }}" data-distance-km="{{ event.distance_km }}" style="border-left: 4px solid {% if 'Kulttuuri' in event.categories %}#e83e8c{% elif 'Urheilu' in event.categories %}#28a745{% elif 'Musiikki' in event.categories %}#6610f2{% elif 'Ilmainen' in event.categories %}#20c997{% else %}#6c757d{% endif %};">
         <!-- Small image or placeholder -->
         {% if event.featured_image %}
-          <img src="{{ event.featured_image }}" alt="{{ event.title }}" class="event-image">
+          <img src="{{ event.featured_image }}" alt="{{ event.title }}" class="event-image" loading="lazy">
         {% else %}
           <div class="event-placeholder">📅</div>
         {% endif %}
@@ -298,7 +298,7 @@
       <div class="event" data-distance="{{ event.distance_category }}" data-distance-km="{{ event.distance_km }}" style="border-left: 4px solid {% if 'Kulttuuri' in event.categories %}#e83e8c{% elif 'Urheilu' in event.categories %}#28a745{% elif 'Musiikki' in event.categories %}#6610f2{% elif 'Ilmainen' in event.categories %}#20c997{% else %}#6c757d{% endif %};">
         <!-- Image or placeholder -->
         {% if event.featured_image %}
-          <img src="{{ event.featured_image }}" alt="{{ event.title }}" class="event-image">
+          <img src="{{ event.featured_image }}" alt="{{ event.title }}" class="event-image" loading="lazy">
         {% else %}
           <div class="event-placeholder">📅</div>
         {% endif %}
