@@ -349,6 +349,19 @@
   {% endif %}
 
   <script>
+    // Apply initial filter immediately to prevent flash
+    const events = document.querySelectorAll('.event');
+
+    events.forEach(event => {
+      const distanceKm = parseFloat(event.getAttribute('data-distance-km')) || 0;
+      // Apply the default "close" filter (<5km) immediately
+      if (distanceKm > 5) {
+        event.style.display = 'none';
+      }
+    });
+  </script>
+
+  <script>
     // Simple accordion toggle for ongoing events
     function toggleOngoing() {
       const content = document.getElementById('ongoing-content');
@@ -367,32 +380,38 @@
       }
     }
 
-    // Inclusive distance filtering with minimal JavaScript
+    // Apply distance filter function
+    function applyDistanceFilter(selectedDistance) {
+      const events = document.querySelectorAll('.event');
+
+      events.forEach(event => {
+        const distanceKm = parseFloat(event.getAttribute('data-distance-km')) || 0;
+        let shouldShow = false;
+
+        if (selectedDistance === 'all') {
+          shouldShow = true;
+        } else if (selectedDistance === 'close' && distanceKm <= 5) {
+          shouldShow = true;
+        } else if (selectedDistance === 'nearby' && distanceKm <= 10) {
+          shouldShow = true;
+        } else if (selectedDistance === 'regional' && distanceKm <= 50) {
+          shouldShow = true;
+        }
+
+        event.style.display = shouldShow ? 'flex' : 'none';
+      });
+    }
+
+    // Handle filter button clicks
     document.querySelectorAll('.filter-btn').forEach(btn => {
       btn.addEventListener('click', function() {
         // Update active button
         document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
         this.classList.add('active');
 
+        // Apply the filter
         const selectedDistance = this.getAttribute('data-distance');
-        const events = document.querySelectorAll('.event');
-
-        events.forEach(event => {
-          const distanceKm = parseFloat(event.getAttribute('data-distance-km')) || 0;
-          let shouldShow = false;
-
-          if (selectedDistance === 'all') {
-            shouldShow = true;
-          } else if (selectedDistance === 'close' && distanceKm <= 5) {
-            shouldShow = true;
-          } else if (selectedDistance === 'nearby' && distanceKm <= 10) {
-            shouldShow = true;
-          } else if (selectedDistance === 'regional' && distanceKm <= 50) {
-            shouldShow = true;
-          }
-
-          event.style.display = shouldShow ? 'flex' : 'none';
-        });
+        applyDistanceFilter(selectedDistance);
       });
     });
   </script>

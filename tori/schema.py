@@ -2,6 +2,6 @@ from pydantic import BaseModel
 
 
 class RawData(BaseModel):
-    """Contains all raw data fetched from tapahtumat.salo.fi"""
+    """Contains all raw event data fetched from API."""
 
     events: list[dict]
