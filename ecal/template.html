@@ -197,6 +197,40 @@
           font-weight: normal;
           margin-top: 0.25rem;
         }
+
+        /* Collapsible section styling */
+        .collapsible-header {
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+        }
+
+        .collapsible-header:hover {
+          color: #007bff;
+        }
+
+        .collapse-icon {
+          transition: transform 0.2s ease;
+          font-size: 1.2rem;
+        }
+
+        .collapse-icon.collapsed {
+          transform: rotate(-90deg);
+        }
+
+        .collapsible-content {
+          overflow: hidden;
+          transition: max-height 0.3s ease-out;
+        }
+
+        .collapsible-content.collapsed {
+          max-height: 0;
+        }
+
+        .collapsible-content.expanded {
+          max-height: 10000px;
+        }
     </style>
 </head>
 <body>
@@ -215,9 +249,13 @@
   <!-- Ongoing long-running events section -->
   {% if data.ongoing %}
   <div class="section">
-    <h2 class="section-title">Meneillään</h2>
-    <div class="events">
-      {% for event in data.ongoing %}
+    <div class="collapsible-header section-title" onclick="toggleOngoing()">
+      <span>Meneillään</span>
+      <span class="collapse-icon" id="ongoing-icon">🔽</span>
+    </div>
+    <div class="collapsible-content expanded" id="ongoing-content">
+      <div class="events">
+        {% for event in data.ongoing %}
       <div class="event ongoing" data-distance="{{ event.distance_category }}" data-distance-km="{{ event.distance_km }}" style="border-left: 4px solid {% if 'Kulttuuri' in event.categories %}#e83e8c{% elif 'Urheilu' in event.categories %}#28a745{% elif 'Musiikki' in event.categories %}#6610f2{% elif 'Ilmainen' in event.categories %}#20c997{% else %}#6c757d{% endif %};">
         <!-- Small image or placeholder -->
         {% if event.featured_image %}
@@ -244,7 +282,8 @@
           </div>
         </div>
       </div>
-      {% endfor %}
+        {% endfor %}
+      </div>
     </div>
   </div>
   {% endif %}
@@ -315,6 +354,24 @@
   {% endif %}
 
   <script>
+    // Simple accordion toggle for ongoing events
+    function toggleOngoing() {
+      const content = document.getElementById('ongoing-content');
+      const icon = document.getElementById('ongoing-icon');
+
+      if (content.classList.contains('collapsed')) {
+        content.classList.remove('collapsed');
+        content.classList.add('expanded');
+        icon.classList.remove('collapsed');
+        icon.textContent = '🔽';
+      } else {
+        content.classList.remove('expanded');
+        content.classList.add('collapsed');
+        icon.classList.add('collapsed');
+        icon.textContent = '▶️';
+      }
+    }
+
     // Inclusive distance filtering with minimal JavaScript
     document.querySelectorAll('.filter-btn').forEach(btn => {
       btn.addEventListener('click', function() {
