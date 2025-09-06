@@ -63,6 +63,11 @@ def transform_events(data: RawData, params: EcalConfig):
         if is_ongoing:
             days_remaining = (end_datetime - now).days
 
+        # Calculate days until start for upcoming events
+        days_until_start = 0
+        if start_datetime > now:
+            days_until_start = (start_datetime - now).days
+
         # Extract location info
         location_parts = []
         if event.get("locations"):
@@ -101,6 +106,7 @@ def transform_events(data: RawData, params: EcalConfig):
                 "is_ongoing": is_ongoing,
                 "is_long_running": is_long_running,
                 "days_remaining": days_remaining,
+                "days_until_start": days_until_start,
                 "event_type": (
                     "ongoing" if (is_ongoing and is_long_running) else "upcoming"
                 ),

@@ -274,11 +274,18 @@
           </div>
 
           <div class="event-dates">
-            {% if event.start_date_short == event.end_date_short %}
-              {{ event.start_date_short }}
+            {% if event.days_until_start == 0 %}
+              Huomenna
             {% else %}
-              {{ event.start_date_short }} - {{ event.end_date_short }}
+              {{ event.days_until_start }} päivän päästä
             {% endif %}
+            <span class="event-start-date">
+              {% if event.start_date_short == event.end_date_short %}
+                ({{ event.start_date_short }})
+              {% else %}
+                ({{ event.start_date_short }} - {{ event.end_date_short }})
+              {% endif %}
+            </span>
           </div>
 
           {% if event.location %}
