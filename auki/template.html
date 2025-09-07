@@ -60,7 +60,7 @@
             <td class="status">
               {% if not schedule.closed and schedule.times %}
                 {% for time in schedule.times %}
-                  {{ time.from }} - {{ time.to }}
+                  {{ time.from_ }} - {{ time.to }}
                 {% endfor %}
               {% else %}
                 Kiinni

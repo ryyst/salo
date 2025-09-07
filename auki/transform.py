@@ -3,5 +3,4 @@ from .schema import RawData
 
 
 def transform_schedule(data: RawData, params: AukiConfig):
-    # TODO
-    return data.data["schedules"]
+    return data.data.schedules
