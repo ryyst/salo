@@ -8,13 +8,13 @@ from utils.renderers import render_stdout
 from utils.schema import JSONModel
 
 from tori import TORI_REGISTRY
-from libby import LIBBY_REGISTRY
+from auki import AUKI_REGISTRY
 from swimmi import SWIMMI_REGISTRY
 
 
 FUNCTION_REGISTRY = {
     "swimmi": SWIMMI_REGISTRY,
-    "libby": LIBBY_REGISTRY,
+    "auki": AUKI_REGISTRY,
     "tori": TORI_REGISTRY,
     "utils": {"render": {"stdout": render_stdout}},
     # etc.

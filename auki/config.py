@@ -1,7 +1,7 @@
 from utils.schema import JSONModel
 
 
-class LibbyConfig(JSONModel):
+class AukiConfig(JSONModel):
     library_id: str
     page_header: str
     render_out_dir: str

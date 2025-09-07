@@ -1,13 +1,13 @@
 from utils.cache import cache_output
 
-from .api import LibbyAPI
-from .config import LibbyConfig
+from .api import AukiAPI
+from .config import AukiConfig
 from .schema import RawData
 
 
-@cache_output("libby_raw", RawData)
-def fetch_schedule(params: LibbyConfig) -> RawData:
-    api = LibbyAPI()
+@cache_output("auki_raw", RawData)
+def fetch_schedule(params: AukiConfig) -> RawData:
+    api = AukiAPI()
 
     response = api.get_open_hours(params.library_id)
 
