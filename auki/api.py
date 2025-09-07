@@ -1,7 +1,7 @@
 from utils.baseapi import BaseAPI
 
 
-class AukiAPI(BaseAPI):
+class LibbyAPI(BaseAPI):
     """Kirjastot.fi API client."""
 
     def __init__(self):
