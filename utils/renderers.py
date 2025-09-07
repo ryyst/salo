@@ -17,7 +17,7 @@ def render_html(data, template_path: str):
     return template.render(data=data)
 
 
-def render_stdout(data):
+def render_stdout(data, params=None):
     return __import__("pprint").pprint(data)
 
 

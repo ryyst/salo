@@ -1,6 +1,6 @@
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,67 +9,47 @@
         html {
           font-family: Calibri, Arial, sans-serif;
           font-size: 24px;
-
           background-color: #e5e5e5;
           color: #111;
-
           box-sizing: border-box;
         }
         body {
           margin: 0;
           padding-top: 2rem;
         }
-
-        table {
-          border-collapse: collapse;
-        }
-
         .content {
-          max-width: 19rem;
+          max-width: 40rem;
           margin: 0 auto;
           padding: 0 16px;
         }
-
-
-        .status {
-          text-align: center;
+        .place {
+          margin-bottom: 2rem;
+          padding: 1rem;
+          background-color: white;
+          border-radius: 8px;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
-
-
-        td, th {
-          padding: 4px 16px;
-          font-size: 0.75rem;
+        .place-name {
+          font-size: 1.2rem;
+          font-weight: bold;
+          margin-bottom: 0.5rem;
+          color: #333;
         }
-
-
+        .place-data {
+          font-size: 0.9rem;
+          color: #555;
+          line-height: 1.4;
+        }
     </style>
 </head>
 <body>
   <div class="content">
-    <table class="content">
-      <thead>
-        <tr>
-          <th>Päivä</th>
-          <th>Avoinna</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for schedule in data %}
-          <tr>
-            <td class="date">{{ schedule.date[:10].split('-')[1:] | reverse | join('.') }}.</td>
-            <td class="status">
-              {% if not schedule.closed and schedule.times %}
-                {% for time in schedule.times %}
-                  {{ time.from_ }} - {{ time.to }}
-                {% endfor %}
-              {% else %}
-                Kiinni
-              {% endif %}
-            </td>
-          </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+    {% for place in data.places %}
+      <div class="place">
+        <div class="place-name">{{ place.place_name }}</div>
+        <div class="place-data">{{ place.place_data }}</div>
+      </div>
+    {% endfor %}
   </div>
 </body>
 </html>

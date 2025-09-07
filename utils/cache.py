@@ -30,7 +30,7 @@ def cache_output(namespace: str, DataModel: Any):
             Log.info("Missing cache, redownloading...")
             fresh_data = function(*args, **kwargs)
 
-            save_file(cache_file, fresh_data.model_dump_json(indent=2))
+            save_file(cache_file, fresh_data.model_dump_json(indent=2, by_alias=True))
 
             # Return new data and continue with the pipeline as usual
             return fresh_data
