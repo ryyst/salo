@@ -15,9 +15,7 @@ class BaserowAPI(BaseAPI):
     """Baserow API client."""
 
     def __init__(self, token):
-        super().__init__(
-            "https://api.baserow.io/api", {"Authorization": f"Token {token}"}
-        )
+        super().__init__("https://api.baserow.io/api", {"Authorization": f"Token {token}"})
 
     def get_table_rows(self, table_id: str):
         response = self.request(

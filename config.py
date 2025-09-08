@@ -1,119 +1,134 @@
 import json
-from typing import Callable, Any, Type, Optional
+from typing import Callable, Type, Optional, Dict, Any, TypeVar
+from functools import wraps
 
-from pydantic import BaseModel, ValidationError, model_validator
+from pydantic import ValidationError
 
 from utils.logging import Log
-from utils.renderers import render_stdout
 from utils.schema import JSONModel
-
-from tori import TORI_REGISTRY
-from auki import AUKI_REGISTRY
-from swimmi import SWIMMI_REGISTRY
+from utils.schema_formatter import format_schema
 
 
-FUNCTION_REGISTRY = {
-    "swimmi": SWIMMI_REGISTRY,
-    "auki": AUKI_REGISTRY,
-    "tori": TORI_REGISTRY,
-    "utils": {"render": {"stdout": render_stdout}},
-    # etc.
-}
+# Global registry for all runners
+RUNNERS_REGISTRY: Dict[str, Dict[str, Any]] = {}
+
+# Type variable for JSONModel subclasses
+T = TypeVar("T", bound=JSONModel)
 
 
-class AppParamsParsingError(Exception):
-    pass
+def register_runner(name: str, config_class: Type[T], description: str = ""):
+    """
+    Decorator to register a runner function with its configuration schema.
+
+    Args:
+        name: Unique name for the runner (used in CLI)
+        config_class: Pydantic model class for validating parameters
+        description: Optional description for the runner
+    """
+
+    def decorator(func: Callable[[T], None]):
+        if name in RUNNERS_REGISTRY:
+            raise ValueError(f"Runner '{name}' is already registered")
+
+        RUNNERS_REGISTRY[name] = {
+            "function": func,
+            "config_class": config_class,
+            "description": description or func.__doc__ or "",
+        }
+
+        @wraps(func)
+        def wrapper(params: T):
+            return func(params)
+
+        return wrapper
+
+    return decorator
 
 
-class FuncRegistryResolveError(Exception):
-    pass
+class RunnerInfo:
+    """Information about a registered runner"""
+
+    def __init__(self, name: str, info: Dict[str, Any]):
+        self.name = name
+        self.function = info["function"]
+        self.config_class = info["config_class"]
+        self.description = info["description"]
 
 
-class ETLConfig(BaseModel):
-    fetcher: str
-    transformer: str
-    renderer: str
-
-    parser: str
-    params: dict
+def get_runner_info(name: str) -> Optional[RunnerInfo]:
+    """Get information about a specific runner"""
+    if name not in RUNNERS_REGISTRY:
+        return None
+    return RunnerInfo(name, RUNNERS_REGISTRY[name])
 
 
-def _resolve(config: ETLConfig, func_type: str) -> Callable:
-    path = config.model_dump()[func_type]  # Existence of this is already validated
+def list_runners() -> Dict[str, str]:
+    """List all registered runners with their descriptions"""
+    return {name: info["description"] for name, info in RUNNERS_REGISTRY.items()}
+
+
+def get_runner_schema(name: str) -> Optional[Dict[str, Any]]:
+    """Get the JSON schema for a runner's configuration"""
+    runner_info = get_runner_info(name)
+    if not runner_info:
+        return None
+
+    return runner_info.config_class.model_json_schema()
+
+
+def format_runner_schema(name: str) -> Optional[str]:
+    """Transform JSON Schema into a simple human-readable format"""
+    runner_info = get_runner_info(name)
+    if not runner_info:
+        return None
+
+    schema = runner_info.config_class.model_json_schema()
+    return format_schema(name, schema)
+
+
+def execute_runner(name: str, config_path: str) -> bool:
+    """
+    Execute a runner with the given configuration file.
+
+    Returns True if successful, False otherwise.
+    """
+    runner_info = get_runner_info(name)
+    if not runner_info:
+        Log.error("Unknown runner: %s", name)
+        return False
 
     try:
-        app, category, func_name = path.split(".", 2)
-        return FUNCTION_REGISTRY[app][category][func_name]
-    except Exception:
-        raise FuncRegistryResolveError(f"Failed to resolve given `{func_type}`: {path}")
+        print("Loading config file:", config_path)
+        with open(config_path, "r") as f:
+            config_data = json.load(f)
 
+        print("Validating parameters for runner:", name)
+        params = runner_info.config_class(**config_data)
 
-class RunnerConfig(BaseModel):
-    name: str
+        print("Executing runner:", name)
+        runner_info.function(params)
 
-    fetcher: Callable
-    transformer: Callable
-    renderer: Callable
+        print("Runner completed successfully:", name)
+        return True
 
-    parser: Type[JSONModel]
-    params: JSONModel
-
-    @model_validator(mode="before")
-    def resolve_functions(cls, data: Any):
-        """
-        Resolve configured function names to actual callables, from our
-        pre-defined function registry.
-        """
-
-        # Pre-validate the existence of all required config values before turning
-        # them into Callables and JSONModels.
-        config = ETLConfig(**data)
-
-        try:
-            data["fetcher"] = _resolve(config, "fetcher")
-            data["transformer"] = _resolve(config, "transformer")
-            data["renderer"] = _resolve(config, "renderer")
-            parser = _resolve(config, "parser")
-
-            data["parser"] = parser
-
-            data["params"] = parser(**data["params"])
-
-        except ValidationError as err:
-            Log.error("Error parsing application params: %s", err.title)
-
-            for e in err.errors():
-                Log.error(
-                    "%s: `%s`",
-                    e.get("msg"),
-                    ".".join(str(p) for p in e.get("loc", [])),
-                )
-
-            raise AppParamsParsingError
-
-        return data
-
-
-def parse_runner_config(path: str) -> Optional[RunnerConfig]:
-    try:
-        Log.info("Parsing provided runner config file: %s...", path)
-        with open(path, "r") as f:
-            data = json.load(f)
-
-        return RunnerConfig(**data)
-
-    except AppParamsParsingError as err:
-        pass
-    except FuncRegistryResolveError as err:
-        Log.error(err)
+    except FileNotFoundError:
+        print("Config file not found:", config_path)
+        print("")
+        print("To create a config file, see the expected schema:")
+        print("  python main.py runners", name)
+        print("")
+        print("Then create your config file with the required parameters:")
+        print("  echo '{}' > %s" % config_path)
+        print("  # Edit %s with your actual configuration" % config_path)
+        return False
     except ValidationError as err:
-        # Missing fields in main config file portion.
+        print("Configuration validation failed for runner '%s':" % name)
         for e in err.errors():
-            Log.error(
-                "%s: `%s`",
-                e.get("msg"),
-                ".".join(str(p) for p in e.get("loc", [])),
-            )
-
-    Log.error("Failed to parse config file, skipping runner: %s", path)
-    return None
+            print("  %s: %s", ".".join(str(p) for p in e.get("loc", [])), e.get("msg"))
+        return False
+    except KeyboardInterrupt:
+        Log.warning("Runner '%s' was interrupted" % name)
+        return False
+    except Exception as e:
+        Log.exception("Unexpected error in runner '%s': %s", name, e, exc_info=e)
+        return False

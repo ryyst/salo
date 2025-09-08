@@ -80,21 +80,7 @@ class LibraryData(BaseModel):
 
 
 class RawData(BaseModel):
-    """Contains all raw data fetched from Kirjastot.fi"""
-
-    data: LibraryData
-
-
-
-
-class RawHTML(BaseModel):
-    """Raw HTML scraping data - just extracted text and metadata"""
-
-    data: str
-
-
-class CombinedRawData(BaseModel):
     """Combined raw data from multiple sources"""
-    
-    library: Optional[RawData] = None
-    pharmacy: Optional[RawHTML] = None
+
+    library: Optional[LibraryData] = None
+    pharmacy: Optional[str] = None

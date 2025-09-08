@@ -1,6 +1,6 @@
 from datetime import datetime
 from .config import AukiConfig
-from .schema import RawData, RawHTML, CombinedRawData
+from .schema import LibraryData, CombinedRawData
 from .utils import (
     get_day_name,
     format_time,
@@ -25,10 +25,10 @@ def transform_combined(data: CombinedRawData, params: AukiConfig):
     return {"places": places}
 
 
-def transform_library(data: RawData, params: AukiConfig):
+def transform_library(data: LibraryData, params: AukiConfig):
     """Complete library transformation - from raw data to display format"""
     # Get raw schedules
-    schedules = data.data.schedules
+    schedules = data.schedules
 
     # Format upcoming week schedule nicely
     today = datetime.now().date()
@@ -58,13 +58,13 @@ def transform_library(data: RawData, params: AukiConfig):
     # Group consecutive days with same opening hours
     grouped_schedule = group_consecutive_days(upcoming_schedules)
 
-    return {"place_name": data.data.name, "place_data": ", ".join(grouped_schedule)}
+    return {"place_name": data.name, "place_data": ", ".join(grouped_schedule)}
 
 
-def transform_pharmacy(data: RawHTML, params: AukiConfig):
+def transform_pharmacy(data: str, params: AukiConfig):
     """Complete pharmacy transformation - from raw HTML to display format"""
     # Get raw text
-    raw_text = data.data
+    raw_text = data
 
     # Extract only the opening times, removing delivery info
     parts = raw_text.split("|")

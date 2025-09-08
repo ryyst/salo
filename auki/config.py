@@ -1,15 +1,13 @@
+from pydantic import Field
 from utils.schema import JSONModel
 
 
 class AukiConfig(JSONModel):
-    # Data source identifiers (use one depending on the data source)
-    library_id: str  # For Kirjastot.fi API
-    location_id: str  # For HTML scrapers (pharmacy locations, etc.)
+    library_id: str = Field(description="Library ID for Kirjastot.fi API")
+    location_id: str = Field(description="Location ID for HTML scrapers (pharmacy locations, etc.)")
 
-    # HTML scraping configuration
-    css_selector: str  # CSS selector for HTML scrapers
+    css_selector: str = Field(description="CSS selector for HTML scrapers")
 
-    # Rendering configuration
-    page_header: str
-    render_out_dir: str
-    render_template: str
+    page_header: str = Field(description="Title displayed on the generated page")
+    render_out_dir: str = Field(description="Output directory for generated HTML")
+    render_template: str = Field(description="Path to Jinja2 template file")

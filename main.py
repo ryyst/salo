@@ -1,65 +1,84 @@
 #!/usr/bin/env python3
 
 import sys
+import json
 
 from utils.devserver import host_dev_server
 from utils.logging import Log
-from config import RunnerConfig, parse_runner_config
+from config import list_runners, format_runner_schema, execute_runner
 
 
-def process_runner(runner: RunnerConfig):
-    """Over-engineered homebrew ETL pipeline."""
+def handle_runners(args: list[str]):
+    """Handle the runners subcommand with various modes"""
 
-    Log.info("Processing runner %s...", runner.name)
+    if len(args) == 0:
+        # List all available runners
+        runners = list_runners()
+        if not runners:
+            print("No runners registered. Make sure to import all modules.")
+            return
 
-    # 1. Fetch raw data.
-    Log.info("Running fetcher...")
-    raw = runner.fetcher(runner.params)
+        print("Available runners:")
+        for name, description in runners.items():
+            print(f"  {name:<20} {description}")
+        return
 
-    # 2. Process raw data into renderable form.
-    Log.info("Running transformer...")
-    data = runner.transformer(raw, runner.params)
+    if len(args) == 1:
+        # Show schema for a specific runner
+        runner_name = args[0]
+        schema_display = format_runner_schema(runner_name)
 
-    # 3. Render to file / wherever.
-    Log.info("Running renderer...")
-    runner.renderer(data, runner.params)
+        if schema_display is None:
+            print(f"Unknown runner: {runner_name}")
+            print("Available runners:")
+            for name in list_runners().keys():
+                print(f"  {name}")
+            return
 
-    Log.info("Done!")
+        print(schema_display)
+        return
 
+    if len(args) == 2:
+        # Execute a runner with config file
+        runner_name, config_path = args
+        success = execute_runner(runner_name, config_path)
+        sys.exit(0 if success else 1)
 
-def handle_runners(runner_configs: list[str]):
-    for config_file in runner_configs:
-        try:
-            runner = parse_runner_config(config_file)
-            if not runner:
-                continue
-
-            process_runner(runner)
-
-        except FileNotFoundError as e:
-            Log.error("No runner file found at path: %s", config_file)
-
-        except KeyboardInterrupt as e:
-            Log.warning(f"Runner {config_file} interrupted, final state unknown.")
-
-        except Exception as e:
-            Log.exception("Unexpected error while processing runner: %s", e, exc_info=e)
+    # Invalid arguments
+    print("Usage for runners subcommand:")
+    print("  python main.py runners                    # List all runners")
+    print("  python main.py runners <name>             # Show runner config schema")
+    print("  python main.py runners <name> <config>    # Execute runner")
 
 
-def exit(reason: str):
-    print(reason)
+def exit_with_usage(reason: str = ""):
+    """Exit with usage information"""
+    if reason:
+        print(f"Error: {reason}\n")
+
+    print("Usage: python main.py <subcommand> [options]")
+    print()
+    print("Subcommands:")
+    print("  runners [name] [config]    Manage and execute runners")
+    print("  dev <output_dir> [port]    Start development server")
+    print()
+    print("Examples:")
+    print("  python main.py runners                        # List all available runners")
+    print("  python main.py runners auki_all               # Show config schema for auki_all")
+    print("  python main.py runners auki_all config.json   # Execute auki_all with config.json")
+    print("  python main.py dev _out/auki/combined-salo/    # Start dev server")
+
     sys.exit(1)
 
 
 def main(args: list[str]):
-    if len(args) < 2:
-        exit(
-            "Usage: python main.py <subcommand> [options]\n"
-            "\n"
-            "Subcommands:\n"
-            "  runners <runner1.json> [runner2.json] [runner3.json] ...\n"
-            "  dev <output_dir> [port]"
-        )
+    # Import all modules to register runners
+    import auki.runners  # noqa
+    import swimmi.runners  # noqa
+    import tori.runners  # noqa
+
+    if len(args) < 1:
+        exit_with_usage("No subcommand provided")
 
     subcommand, *subargs = args
 
@@ -67,12 +86,15 @@ def main(args: list[str]):
         return handle_runners(subargs)
 
     if subcommand == "dev":
+        if len(subargs) < 1:
+            exit_with_usage("dev subcommand requires output directory")
+
         directory = subargs[0]
         port = int(subargs[1]) if len(subargs) > 1 else 8000
 
         return host_dev_server(directory, port)
 
-    exit(f"Unknown subcommand: {subcommand}")
+    exit_with_usage(f"Unknown subcommand: {subcommand}")
 
 
 if __name__ == "__main__":
