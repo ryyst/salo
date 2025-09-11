@@ -15,7 +15,7 @@
         }
         body {
           margin: 0;
-          padding: 1rem;
+          padding: 0.5rem;
           line-height: 1.5;
         }
 
@@ -38,19 +38,27 @@
 
         .event {
           background: white;
-          margin-bottom: 1.5rem;
-          padding: 1.5rem;
+          margin-bottom: 0.75rem;
+          padding: 0rem;
           border-radius: 8px;
           box-shadow: 0 2px 4px rgba(0,0,0,0.1);
           display: flex;
-          gap: 1rem;
+          flex-direction: column;
         }
 
         .event-title {
-          font-size: 1.25rem;
+          font-size: 1rem;
           font-weight: bold;
-          margin-bottom: 0.5rem;
+          margin-bottom: 0;
           color: #212529;
+          flex: 1;
+          padding: 0.25rem 0.5rem;
+          line-height: 1.3;
+          max-height: calc(1.3em * 3);
+          overflow: hidden;
+          display: -webkit-box;
+          -webkit-line-clamp: 3;
+          -webkit-box-orient: vertical;
         }
 
         .event-title a {
@@ -65,21 +73,21 @@
         .event-dates {
           color: #6c757d;
           font-weight: 500;
-          margin-bottom: 0.5rem;
-          font-size: 0.9rem;
+          margin-bottom: 0.4rem;
+          font-size: 0.8rem;
         }
 
         .event-location {
           color: #6c757d;
           font-style: italic;
-          font-size: 0.85rem;
-          margin-bottom: 0.75rem;
+          font-size: 0.75rem;
+          margin-bottom: 0.5rem;
         }
 
         .event-categories {
           display: flex;
           flex-wrap: wrap;
-          gap: 0.5rem;
+          gap: 0.25rem;
         }
 
         .category {
@@ -91,21 +99,35 @@
         }
 
         .event-image {
-          width: 120px;
-          height: 120px;
+          align-self: baseline;
+          width: 70px;
+          height: 80px;
           object-fit: cover;
-          border-radius: 8px;
+          border-radius: 4px;
           flex-shrink: 0;
-          align-self: center;
         }
 
         .event-content {
           flex: 1;
         }
 
+        .event-header {
+          display: flex;
+          align-items: center;
+          gap: 0;
+        }
+
+        .event-details {
+          display: flex;
+          flex-direction: column;
+          gap: 0rem;
+          padding: 0.5rem;
+
+        }
+
         .event-placeholder {
-          width: 120px;
-          height: 120px;
+          width: 70px;
+          height: 70px;
           background: linear-gradient(135deg, #f8f9fa, #e9ecef);
           border-radius: 8px;
           flex-shrink: 0;
@@ -113,7 +135,7 @@
           align-items: center;
           justify-content: center;
           color: #6c757d;
-          font-size: 2rem;
+          font-size: 1.5rem;
         }
 
         .filters {
@@ -165,13 +187,22 @@
 
         /* Compressed ongoing event styles */
         .event.ongoing {
-          padding: 1rem;
-          margin-bottom: 1rem;
+          padding: 0rem;
+          margin-bottom: 0.5rem;
+          gap: 0;
+          flex-direction: row;
         }
 
         .event.ongoing .event-image {
+          align-self: center;
           width: 60px;
           height: 60px;
+        }
+
+        .event.ongoing .event-content {
+          align-content: center;
+          padding: 0.25rem 0.5rem;
+          overflow: hidden;
         }
 
         .event.ongoing .event-placeholder {
@@ -181,12 +212,17 @@
         }
 
         .event.ongoing .event-title {
-          font-size: 1rem;
-          margin-bottom: 0.25rem;
+          font-size: 0.8rem;
+          margin-bottom: 0.15rem;
+          white-space: nowrap;
+          text-overflow: ellipsis;
+          overflow: hidden;
+          max-width: 100%;
+          padding: 0;
         }
 
         .event.ongoing .event-dates {
-          font-size: 0.8rem;
+          font-size: 0.7rem;
           margin-bottom: 0;
         }
 
@@ -296,15 +332,14 @@
     <div class="events">
       {% for event in data.upcoming %}
       <div class="event" data-distance="{{ event.distance_category }}" data-distance-km="{{ event.distance_km }}" style="border-left: 4px solid {% if 'Kulttuuri' in event.categories %}#e83e8c{% elif 'Urheilu' in event.categories %}#28a745{% elif 'Musiikki' in event.categories %}#6610f2{% elif 'Ilmainen' in event.categories %}#20c997{% else %}#6c757d{% endif %};">
-        <!-- Image or placeholder -->
-        {% if event.featured_image %}
-          <img src="{{ event.featured_image }}" alt="{{ event.title }}" class="event-image" loading="lazy">
-        {% else %}
-          <div class="event-placeholder">📅</div>
-        {% endif %}
+        <!-- Header with image and title -->
+        <div class="event-header">
+          {% if event.featured_image %}
+            <img src="{{ event.featured_image }}" alt="{{ event.title }}" class="event-image" loading="lazy">
+          {% else %}
+            <div class="event-placeholder">📅</div>
+          {% endif %}
 
-        <!-- Full event content -->
-        <div class="event-content">
           <div class="event-title">
             {% if event.permalink %}
               <a href="{{ event.permalink }}" target="_blank">{{ event.title }}</a>
@@ -312,7 +347,10 @@
               {{ event.title }}
             {% endif %}
           </div>
+        </div>
 
+        <!-- Details below -->
+        <div class="event-details">
           <div class="event-dates">
             {% if event.days_until_start == 0 %}
               Huomenna

@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
@@ -29,3 +30,8 @@ def save_file(output_file: str, data: str):
         file.write(data)
 
     Log.info("Rendered file saved to %s", output_file)
+
+    # Print clickable file URL for HTML files
+    if output_file.endswith(".html"):
+        abs_path = os.path.abspath(output_file)
+        Log.info(f"file://{abs_path}")
