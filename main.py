@@ -1,17 +1,56 @@
 #!/usr/bin/env python3
-
 import sys
-import json
+import argparse
 
 from utils.devserver import host_dev_server
-from utils.logging import Log
 from config import list_runners, format_runner_schema, execute_runner
 
+# Import all runner modules to register individual runner functions
+import auki.runners  # noqa
+import swimmi.runners  # noqa
+import tori.runners  # noqa
 
-def handle_runners(args: list[str]):
-    """Handle the runners subcommand with various modes"""
 
-    if len(args) == 0:
+def create_parser():
+    """Create the argument parser"""
+    parser = argparse.ArgumentParser(description="Salo.fyi ETL pipeline runner")
+
+    subparsers = parser.add_subparsers(dest="subcommand", help="Available subcommands")
+
+    # Runners subcommand
+    runners_parser = subparsers.add_parser("runners", help="Manage and execute runners")
+    runners_parser.add_argument(
+        "runner_name", nargs="?", help="Name of runner to execute or show schema"
+    )
+    runners_parser.add_argument("config_file", nargs="?", help="Configuration file to use")
+    runners_parser.add_argument(
+        "--output-dir",
+        default="_out",
+        help="Base output directory for generated files (default: _out)",
+    )
+    runners_parser.add_argument(
+        "--cache-dir",
+        default="_cache",
+        help="Cache directory for storing temporary data (default: _cache)",
+    )
+
+    # Dev subcommand
+    dev_parser = subparsers.add_parser("dev", help="Start development server")
+    dev_parser.add_argument("directory", help="Directory to serve")
+    dev_parser.add_argument(
+        "port",
+        nargs="?",
+        type=int,
+        default=8000,
+        help="Port to serve on (default: 8000)",
+    )
+
+    return parser
+
+
+def handle_runners(args):
+    """Handle the runners subcommand"""
+    if not args.runner_name:
         # List all available runners
         runners = list_runners()
         if not runners:
@@ -23,13 +62,12 @@ def handle_runners(args: list[str]):
             print(f"  {name:<20} {description}")
         return
 
-    if len(args) == 1:
+    if not args.config_file:
         # Show schema for a specific runner
-        runner_name = args[0]
-        schema_display = format_runner_schema(runner_name)
+        schema_display = format_runner_schema(args.runner_name)
 
         if schema_display is None:
-            print(f"Unknown runner: {runner_name}")
+            print(f"Unknown runner: {args.runner_name}")
             print("Available runners:")
             for name in list_runners().keys():
                 print(f"  {name}")
@@ -38,64 +76,29 @@ def handle_runners(args: list[str]):
         print(schema_display)
         return
 
-    if len(args) == 2:
-        # Execute a runner with config file
-        runner_name, config_path = args
-        success = execute_runner(runner_name, config_path)
-        sys.exit(0 if success else 1)
-
-    # Invalid arguments
-    print("Usage for runners subcommand:")
-    print("  python main.py runners                    # List all runners")
-    print("  python main.py runners <name>             # Show runner config schema")
-    print("  python main.py runners <name> <config>    # Execute runner")
+    # Execute a runner with config file
+    success = execute_runner(args.runner_name, args.config_file, args.output_dir, args.cache_dir)
+    sys.exit(0 if success else 1)
 
 
-def exit_with_usage(reason: str = ""):
-    """Exit with usage information"""
-    if reason:
-        print(f"Error: {reason}\n")
+def main():
 
-    print("Usage: python main.py <subcommand> [options]")
-    print()
-    print("Subcommands:")
-    print("  runners [name] [config]    Manage and execute runners")
-    print("  dev <output_dir> [port]    Start development server")
-    print()
-    print("Examples:")
-    print("  python main.py runners                        # List all available runners")
-    print("  python main.py runners auki_all               # Show config schema for auki_all")
-    print("  python main.py runners auki_all config.json   # Execute auki_all with config.json")
-    print("  python main.py dev _out/auki/combined-salo/    # Start dev server")
+    parser = create_parser()
+    args = parser.parse_args()
 
+    if not args.subcommand:
+        parser.print_help()
+        sys.exit(1)
+
+    if args.subcommand == "runners":
+        return handle_runners(args)
+
+    if args.subcommand == "dev":
+        return host_dev_server(args.directory, args.port)
+
+    parser.print_help()
     sys.exit(1)
 
 
-def main(args: list[str]):
-    # Import all modules to register runners
-    import auki.runners  # noqa
-    import swimmi.runners  # noqa
-    import tori.runners  # noqa
-
-    if len(args) < 1:
-        exit_with_usage("No subcommand provided")
-
-    subcommand, *subargs = args
-
-    if subcommand == "runners":
-        return handle_runners(subargs)
-
-    if subcommand == "dev":
-        if len(subargs) < 1:
-            exit_with_usage("dev subcommand requires output directory")
-
-        directory = subargs[0]
-        port = int(subargs[1]) if len(subargs) > 1 else 8000
-
-        return host_dev_server(directory, port)
-
-    exit_with_usage(f"Unknown subcommand: {subcommand}")
-
-
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    main()

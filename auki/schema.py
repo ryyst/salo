@@ -41,9 +41,7 @@ class OpeningTime(BaseModel):
     """Individual opening time slot"""
 
     to: str  # HH:MM format
-    from_: str = Field(
-        alias="from"
-    )  # HH:MM format (using from_ to avoid Python keyword)
+    from_: str = Field(alias="from")  # HH:MM format (using from_ to avoid Python keyword)
     status: int
 
 

@@ -1,6 +1,6 @@
 from datetime import datetime
 from .config import AukiConfig
-from .schema import LibraryData, CombinedRawData
+from .schema import LibraryData, RawData
 from .utils import (
     get_day_name,
     format_time,
@@ -8,7 +8,7 @@ from .utils import (
 )
 
 
-def transform_combined(data: CombinedRawData, params: AukiConfig):
+def transform_combined(data: RawData, params: AukiConfig):
     """Transform combined library and pharmacy data into unified format"""
     places = []
 

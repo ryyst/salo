@@ -25,8 +25,6 @@ class SwimmiConfig(JSONModel):
 
     page_header: str = Field(description="Title displayed on the generated page")
     render_hours: tuple[int, int] = Field(description="Start and end hours for rendering")
-    render_out_dir: str = Field(description="Output directory for generated HTML")
-    render_template: str = Field(description="Path to Jinja2 template file")
 
     open_hours: list[tuple[int, int]] = Field(
         description="Daily opening hours [start, end] for each weekday"

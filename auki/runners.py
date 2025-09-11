@@ -1,6 +1,7 @@
 from __future__ import annotations
+import os
 
-from config import register_runner
+from config import register_runner, get_output_dir
 from utils.renderers import render_html, save_file
 
 from .config import AukiConfig
@@ -19,6 +20,10 @@ def run_auki(params: AukiConfig) -> None:
     transformed_data = transform_combined(raw_data, params)
 
     # 3. Render to HTML
-    html = render_html(transformed_data, params.render_template)
-    filename = params.render_out_dir + "index.html"
+    template_path = "auki/template.html"  # Hardcoded template path
+    html = render_html(transformed_data, template_path)
+
+    # Use CLI output directory + runner name
+    output_dir = os.path.join(get_output_dir(), "auki")
+    filename = os.path.join(output_dir, "index.html")
     save_file(filename, html)

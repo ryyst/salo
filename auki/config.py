@@ -9,5 +9,3 @@ class AukiConfig(JSONModel):
     css_selector: str = Field(description="CSS selector for HTML scrapers")
 
     page_header: str = Field(description="Title displayed on the generated page")
-    render_out_dir: str = Field(description="Output directory for generated HTML")
-    render_template: str = Field(description="Path to Jinja2 template file")
