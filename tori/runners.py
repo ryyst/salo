@@ -1,6 +1,5 @@
 from __future__ import annotations
 import os
-from typing import Any
 
 from config import register_runner, get_output_dir
 from utils.renderers import render_html, save_file

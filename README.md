@@ -13,5 +13,5 @@ Take a peek at `example_runner.jsonc` and create your own runner config accordin
 ```sh
 pip install -r requirements.txt
 
-python main.py _envs/my_runner.json
+python main.py runners
 ```

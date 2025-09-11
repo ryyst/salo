@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import os
 import sys
 import argparse
 
@@ -22,7 +23,10 @@ def create_parser():
     runners_parser.add_argument(
         "runner_name", nargs="?", help="Name of runner to execute or show schema"
     )
-    runners_parser.add_argument("config_file", nargs="?", help="Configuration file to use")
+    runners_parser.add_argument(
+        "--params",
+        help="Configuration file to use (default: _confs/{runner_name}.json if exists, otherwise show schema)",
+    )
     runners_parser.add_argument(
         "--output-dir",
         default="_out",
@@ -62,22 +66,36 @@ def handle_runners(args):
             print(f"  {name:<20} {description}")
         return
 
-    if not args.config_file:
-        # Show schema for a specific runner
-        schema_display = format_runner_schema(args.runner_name)
+    # Determine config file path
+    if args.params:
+        # Explicit config file provided
+        config_file = args.params
+    else:
+        # No --params provided, check if default config exists
+        default_config = f"_confs/{args.runner_name}.json"
 
-        if schema_display is None:
-            print(f"Unknown runner: {args.runner_name}")
-            print("Available runners:")
-            for name in list_runners().keys():
-                print(f"  {name}")
+        # Check if default config file exists
+        if os.path.exists(default_config):
+            # Use default config file
+            config_file = default_config
+        else:
+            # No default config found, show schema
+            schema_display = format_runner_schema(args.runner_name)
+
+            if schema_display is None:
+                print(f"Unknown runner: {args.runner_name}")
+                print("Available runners:")
+                for name in list_runners().keys():
+                    print(f"  {name}")
+                return
+
+            print(schema_display)
             return
 
-        print(schema_display)
-        return
-
     # Execute a runner with config file
-    success = execute_runner(args.runner_name, args.config_file, args.output_dir, args.cache_dir)
+    success = execute_runner(
+        args.runner_name, config_file, args.output_dir, args.cache_dir
+    )
     sys.exit(0 if success else 1)
 
 
