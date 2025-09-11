@@ -20,19 +20,23 @@ def cache_output(namespace: str, DataModel: Any):
     def decorator(function):
         def wrapper(*args, **kwargs):
             # Import here to avoid circular imports
-            from config import get_cache_dir
+            from config import get_cache_dir, should_ignore_cache
 
             today = date.today().strftime("%Y-%m-%d")
             cache_dir = get_cache_dir()
             cache_file = f"{cache_dir}/{today}_{namespace}.json"
 
-            cached_data = _read_json_from_file(cache_file)
-            if cached_data:
-                Log.info("Cached data found! Proceeding offline.")
-                if DataModel == str:
-                    return cached_data
-                else:
-                    return DataModel(**cached_data)
+            # Check if cache should be ignored
+            if should_ignore_cache():
+                Log.info("Ignoring cache, forcing redownload...")
+            else:
+                cached_data = _read_json_from_file(cache_file)
+                if cached_data:
+                    Log.info("Cached data found! Proceeding offline.")
+                    if DataModel == str:
+                        return cached_data
+                    else:
+                        return DataModel(**cached_data)
 
             Log.info("Missing cache, redownloading...")
             fresh_data = function(*args, **kwargs)

@@ -37,6 +37,11 @@ def create_parser():
         default="_cache",
         help="Cache directory for storing temporary data (default: _cache)",
     )
+    runners_parser.add_argument(
+        "--ignore-cache",
+        action="store_true",
+        help="Force redownload of all data, ignoring existing cache",
+    )
 
     # Dev subcommand
     dev_parser = subparsers.add_parser("dev", help="Start development server")
@@ -94,7 +99,11 @@ def handle_runners(args):
 
     # Execute a runner with config file
     success = execute_runner(
-        args.runner_name, config_file, args.output_dir, args.cache_dir
+        args.runner_name,
+        config_file,
+        args.output_dir,
+        args.cache_dir,
+        args.ignore_cache,
     )
     sys.exit(0 if success else 1)
 

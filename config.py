@@ -13,16 +13,17 @@ from utils.schema_formatter import format_schema
 RUNNERS_REGISTRY: Dict[str, Dict[str, Any]] = {}
 
 # Global context for CLI parameters
-CLI_CONTEXT = {"output_dir": "_out", "cache_dir": "_cache"}
+CLI_CONTEXT = {"output_dir": "_out", "cache_dir": "_cache", "ignore_cache": False}
 
 # Type variable for JSONModel subclasses
 T = TypeVar("T", bound=JSONModel)
 
 
-def set_cli_context(output_dir: str, cache_dir: str):
+def set_cli_context(output_dir: str, cache_dir: str, ignore_cache: bool = False):
     """Set global CLI context parameters"""
     CLI_CONTEXT["output_dir"] = output_dir
     CLI_CONTEXT["cache_dir"] = cache_dir
+    CLI_CONTEXT["ignore_cache"] = ignore_cache
 
 
 def get_output_dir() -> str:
@@ -33,6 +34,11 @@ def get_output_dir() -> str:
 def get_cache_dir() -> str:
     """Get the current cache directory"""
     return CLI_CONTEXT["cache_dir"]
+
+
+def should_ignore_cache() -> bool:
+    """Get whether to ignore cache"""
+    return CLI_CONTEXT["ignore_cache"]
 
 
 def register_runner(name: str, config_class: Type[T], description: str = ""):
@@ -106,7 +112,11 @@ def format_runner_schema(name: str) -> Optional[str]:
 
 
 def execute_runner(
-    name: str, config_path: str, output_dir: str = "_out", cache_dir: str = "_cache"
+    name: str,
+    config_path: str,
+    output_dir: str = "_out",
+    cache_dir: str = "_cache",
+    ignore_cache: bool = False,
 ) -> bool:
     """
     Execute a runner with the given configuration file.
@@ -120,7 +130,7 @@ def execute_runner(
 
     try:
         # Set global CLI context
-        set_cli_context(output_dir, cache_dir)
+        set_cli_context(output_dir, cache_dir, ignore_cache)
 
         print("Loading config file:", config_path)
         with open(config_path, "r") as f:
