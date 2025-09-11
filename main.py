@@ -10,6 +10,7 @@ from config import list_runners, format_runner_schema, execute_runner
 import auki.runners  # noqa
 import swimmi.runners  # noqa
 import tori.runners  # noqa
+import leffa.runners  # noqa
 
 
 def create_parser():
