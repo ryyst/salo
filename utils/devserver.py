@@ -1,6 +1,8 @@
 import os
+from config import list_runners, execute_runner
 from http.server import SimpleHTTPRequestHandler, HTTPServer
 
+from utils.watcher import start_file_watcher
 from utils.logging import Log
 
 
@@ -161,8 +163,6 @@ def host_dev_server(out_directory: str = "_out", port: int = 8000):
     try:
         # Build all applications first
         Log.info("Building all applications...")
-        from config import list_runners, execute_runner
-        import os
 
         all_success = True
         runners = list_runners()
@@ -193,9 +193,6 @@ def host_dev_server(out_directory: str = "_out", port: int = 8000):
         else:
             Log.info("All applications built successfully")
 
-        # Start file watcher
-        from utils.watcher import start_file_watcher
-
         observer = start_file_watcher(".")
 
         # Create a handler factory that passes the out_directory
@@ -208,7 +205,9 @@ def host_dev_server(out_directory: str = "_out", port: int = 8000):
         server.serve_forever()
 
     except Exception as e:
-        Log.exception("Failed to start the multi-app development server: %s", e, exc_info=e)
+        Log.exception(
+            "Failed to start the multi-app development server: %s", e, exc_info=e
+        )
 
     except KeyboardInterrupt:
         Log.info("Shutting down file watcher...")

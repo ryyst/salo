@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(/home/risto/code/sws/**)",
+      "Read(/home/risto/code/salo.fyi/salo/templates/static/js/**)",
+      "Read(/home/risto/code/salo.fyi/salo/**)",
+      "Read(/home/risto/code/salo.fyi/salo/_out/**)",
+      "Read(/home/risto/code/salo.fyi/salo/_out/swimmi/**)",
+      "Read(/home/risto/code/salo.fyi/salo/templates/**)",
+      "Read(/home/risto/code/salo.fyi/salo/templates/**)",
+      "Read(/home/risto/code/salo.fyi/salo/templates/**)",
+      "Read(/home/risto/code/salo.fyi/salo/templates/**)",
+      "Read(/home/risto/code/salo.fyi/salo/templates/**)",
+      "Read(/home/risto/code/salo.fyi/salo/swimmi/**)",
+      "Read(/home/risto/code/salo.fyi/salo/swimmi/**)",
+      "Read(/home/risto/code/salo.fyi/salo/swimmi/**)",
+      "Read(/home/risto/code/salo.fyi/salo/templates/static/js/**)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
