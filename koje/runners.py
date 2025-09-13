@@ -1,4 +1,5 @@
 import shutil
+import os
 from pathlib import Path
 from config import register_runner, get_output_dir
 from utils.renderers import render_html, save_file
@@ -10,8 +11,18 @@ from .config import KojeConfig
 def run_koje(params: KojeConfig):
     """Generate the main dashboard container application"""
 
-    output_dir = Path(get_output_dir()) / "koje"
-    output_dir.mkdir(parents=True, exist_ok=True)
+    output_dir = os.path.join(get_output_dir(), "koje")
+    filename = os.path.join(output_dir, "index.html")
+
+    # Render the main HTML file
+    data = {
+        "iframes": [iframe.dict() for iframe in params.iframes],
+        "title": params.title,
+        "description": params.description,
+    }
+
+    html_content = render_html(data, "koje/template.html")
+    save_file(filename, html_content)
 
     # Copy all static files
     static_dir = Path("koje/static")
@@ -19,14 +30,4 @@ def run_koje(params: KojeConfig):
         for static_file in static_dir.iterdir():
             if static_file.is_file():
                 Log.info(f"Copying static file: {static_file.name}")
-                shutil.copy2(static_file, output_dir / static_file.name)
-
-    # Render the main HTML file
-    template_data = {
-        "iframes": [iframe.dict() for iframe in params.iframes],
-        "title": params.title,
-        "description": params.description,
-    }
-
-    html_content = render_html(template_data, "koje/templates/index.html")
-    save_file(str(output_dir / "index.html"), html_content)
+                shutil.copy2(static_file, os.path.join(output_dir, static_file.name))
