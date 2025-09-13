@@ -5,7 +5,7 @@ from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 from utils.logging import Log
 
-jinja = Environment(loader=FileSystemLoader("."), autoescape=select_autoescape())
+jinja = Environment(loader=FileSystemLoader([".", "templates"]), autoescape=select_autoescape())
 
 
 #

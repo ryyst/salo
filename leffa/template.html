@@ -1,285 +1,305 @@
-<!DOCTYPE html>
-<html lang="fi">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Leffa - Salo Bio</title>
-    <style>
-        html {
-          font-family: Calibri, Arial, sans-serif;
-          font-size: 18px;
-          background-color: #f8f9fa;
-          color: #212529;
-          box-sizing: border-box;
-        }
-        body {
-          margin: 0;
-          padding: 0.5rem;
-          line-height: 1.5;
-        }
+{% extends "base.html" %}
+{% from 'macros.html' import card %}
 
-        .header {
-          text-align: center;
-          margin-bottom: 1.5rem;
-          padding-bottom: 1rem;
-          border-bottom: 2px solid #dee2e6;
-        }
+{% block title %}🎬 Bio Salo{% endblock %}
 
-        .header h1 {
-          color: #495057;
-          margin: 0;
-        }
+{% block app_title %}🎬 Bio Salo{% endblock %}
 
-        .subtitle {
-          color: #6c757d;
-          font-size: 0.9rem;
-          margin-top: 0.5rem;
-        }
+{% block header_extra %}
+<div class="subtitle">Tulevat elokuvat - seuraavat 2 viikkoa</div>
+{% endblock %}
 
-        .movies {
-          max-width: 800px;
-          margin: 0 auto;
-        }
+{% block footer_updated %}
+Päivitetty {{ data.generated_at | default('tuntematon aika') }}
+{% endblock %}
 
-        .movie {
-          background: white;
-          margin-bottom: 0.75rem;
-          border-radius: 8px;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-          overflow: hidden;
-        }
-
-        .movie-header {
-          display: flex;
-          align-items: center;
-          padding: 0.75rem;
-          gap: 0.75rem;
-          background: linear-gradient(135deg, #f8f9fa, #e9ecef);
-          border-bottom: 1px solid #dee2e6;
-        }
-
-        .movie-poster {
-          width: 60px;
-          height: 80px;
-          object-fit: cover;
-          border-radius: 4px;
-          flex-shrink: 0;
-          background: #dee2e6;
-        }
-
-        .movie-poster-placeholder {
-          width: 60px;
-          height: 80px;
-          background: linear-gradient(135deg, #dee2e6, #adb5bd);
-          border-radius: 4px;
-          flex-shrink: 0;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 1.5rem;
-          color: #6c757d;
-        }
-
-        .movie-info {
-          flex: 1;
-        }
-
-        .movie-title {
-          font-size: 1.1rem;
-          font-weight: bold;
-          margin-bottom: 0.25rem;
-          color: #212529;
-        }
-
-        .movie-title a {
-          color: #212529;
-          text-decoration: none;
-        }
-
-        .movie-title a:hover {
-          color: #007bff;
-          text-decoration: underline;
-        }
-
-        .movie-meta {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 0.5rem;
-          font-size: 0.8rem;
-          color: #6c757d;
-          margin-bottom: 0.25rem;
-        }
-
-        .movie-meta span {
-          background: #e9ecef;
-          padding: 0.1rem 0.4rem;
-          border-radius: 12px;
-          font-size: 0.7rem;
-        }
-
-        .movie-intro {
-          font-size: 0.8rem;
-          color: #495057;
-          line-height: 1.3;
-          max-height: calc(1.3em * 2);
-          overflow: hidden;
-          display: -webkit-box;
-          -webkit-line-clamp: 2;
-          -webkit-box-orient: vertical;
-        }
-
-        .shows {
-          padding: 0.5rem 0.75rem 0.75rem;
-        }
-
-        .shows-title {
-          font-size: 0.9rem;
-          font-weight: bold;
-          color: #495057;
-          margin-bottom: 0.5rem;
-        }
-
-        .show-list {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 0.5rem;
-        }
-
-        .show {
-          background: #f8f9fa;
-          border: 1px solid #dee2e6;
-          border-radius: 6px;
-          padding: 0.4rem 0.6rem;
-          font-size: 0.8rem;
-          transition: background-color 0.2s;
-          cursor: pointer;
-        }
-
-        .show:hover {
-          background: #e9ecef;
-        }
-
-        .show-time {
-          font-weight: bold;
-          color: #007bff;
-        }
-
-        .show-room {
-          color: #6c757d;
-          font-size: 0.7rem;
-        }
-
-        .show-price {
-          color: #28a745;
-          font-weight: 500;
-          font-size: 0.7rem;
-        }
-
-        .show-note {
-          color: #dc3545;
-          font-size: 0.6rem;
-          font-style: italic;
-        }
-
-        .no-movies {
-          text-align: center;
-          color: #6c757d;
-          padding: 2rem;
-          font-style: italic;
-        }
-
-        /* Genre color coding */
-        .movie[data-genre*="kauhu"] .movie-header {
-          background: linear-gradient(135deg, #f8d7da, #f5c6cb);
-        }
-
-        .movie[data-genre*="komedia"] .movie-header {
-          background: linear-gradient(135deg, #fff3cd, #ffeaa7);
-        }
-
-        .movie[data-genre*="draama"] .movie-header {
-          background: linear-gradient(135deg, #d4edda, #c3e6cb);
-        }
-
-        .movie[data-genre*="animaatio"] .movie-header,
-        .movie[data-genre*="koko perheen"] .movie-header {
-          background: linear-gradient(135deg, #cce5ff, #b3d9ff);
-        }
-
-        .movie[data-genre*="toiminta"] .movie-header {
-          background: linear-gradient(135deg, #ffe0b3, #ffcc80);
-        }
-    </style>
-</head>
-<body>
-  <div class="header">
-    <h1>🎬 Bio Salo</h1>
-    <div class="subtitle">Tulevat elokuvat - seuraavat 2 viikkoa</div>
-  </div>
-
-  <div class="movies">
-    {% if movies %}
-      {% for movie in movies %}
-      <div class="movie" data-genre="{{ movie.genre | lower }}">
-        <div class="movie-header">
-          {% if movie.poster_url %}
-            <img src="https://biosalo.fi/wp-content/plugins/nexxo-scope/banners/{{ movie.poster_url }}" 
-                 alt="{{ movie.title }}" class="movie-poster" loading="lazy">
-          {% else %}
-            <div class="movie-poster-placeholder">🎬</div>
-          {% endif %}
+{% block content %}
+<div class="container">
+  {% if data.movies %}
+    {% for movie in data.movies %}
+    <div class="movie card" data-genre="{{ movie.genre | lower }}">
+      <div class="movie-header">
+        {% if movie.poster_url %}
+          <img src="https://biosalo.fi/wp-content/plugins/nexxo-scope/banners/{{ movie.poster_url }}" 
+               alt="{{ movie.title }}" class="movie-poster" loading="lazy">
+        {% else %}
+          <div class="movie-poster-placeholder">🎬</div>
+        {% endif %}
+        
+        <div class="movie-info">
+          <div class="movie-title">
+            <a href="https://biosalo.fi/elokuva/?movie={{ movie.id }}" target="_blank">{{ movie.title }}</a>
+          </div>
           
-          <div class="movie-info">
-            <div class="movie-title">
-              <a href="https://biosalo.fi/elokuva/?movie={{ movie.id }}" target="_blank">{{ movie.title }}</a>
-            </div>
-            
-            <div class="movie-meta">
-              {% if movie.genre %}<span>{{ movie.genre }}</span>{% endif %}
-              {% if movie.duration %}<span>{{ movie.duration }}</span>{% endif %}
-              {% if movie.age_limit %}<span>{{ movie.age_limit }}</span>{% endif %}
-              {% if movie.release_year %}<span>{{ movie.release_year }}</span>{% endif %}
-              {% if movie.director %}<span>Ohj: {{ movie.director }}</span>{% endif %}
-            </div>
+          <div class="movie-meta">
+            {% if movie.genre %}<span>{{ movie.genre }}</span>{% endif %}
+            {% if movie.duration %}<span>{{ movie.duration }}</span>{% endif %}
+            {% if movie.age_limit %}<span>{{ movie.age_limit }}</span>{% endif %}
+            {% if movie.release_year %}<span>{{ movie.release_year }}</span>{% endif %}
+            {% if movie.director %}<span>Ohj: {{ movie.director }}</span>{% endif %}
+          </div>
 
-            {% if movie.intro %}
-            <div class="movie-intro">{{ movie.intro }}</div>
+          {% if movie.intro %}
+          <div class="movie-intro">{{ movie.intro }}</div>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="shows">
+        <div class="shows-title">Näytösajat ({{ movie.shows | length }} näytöstä)</div>
+        <div class="show-list">
+          {% for show in movie.shows %}
+          <div class="show">
+            <div class="show-time">{{ show.klo }}</div>
+            <div class="show-room">{{ show.room_title }}</div>
+            <div class="show-price">{{ show.price }}€</div>
+            {% if show.note %}
+            <div class="show-note">{{ show.note }}</div>
             {% endif %}
           </div>
-        </div>
-
-        <div class="shows">
-          <div class="shows-title">Näytösajat ({{ movie.shows | length }} näytöstä)</div>
-          <div class="show-list">
-            {% for show in movie.shows %}
-            <div class="show">
-              <div class="show-time">{{ show.klo }}</div>
-              <div class="show-room">{{ show.room_title }}</div>
-              <div class="show-price">{{ show.price }}€</div>
-              {% if show.note %}
-              <div class="show-note">{{ show.note }}</div>
-              {% endif %}
-            </div>
-            {% endfor %}
-          </div>
+          {% endfor %}
         </div>
       </div>
-      {% endfor %}
-    {% else %}
-      <div class="no-movies">
-        Ei tulevia elokuvia löytynyt.
-      </div>
-    {% endif %}
-  </div>
+    </div>
+    {% endfor %}
+  {% else %}
+    <div class="no-movies">
+      Ei tulevia elokuvia löytynyt.
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
 
-  <script>
-    // Add click handler for show times (future enhancement for direct booking)
-    document.querySelectorAll('.show').forEach(show => {
-      show.addEventListener('click', function() {
-        // Could link to booking page in the future
-        console.log('Show clicked:', this);
-      });
+{% block styles %}
+<style>
+  /* Header subtitle styling */
+  .subtitle {
+    color: var(--color-text-secondary);
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+  }
+
+  /* Movie styling */
+  .movie {
+    overflow: hidden;
+  }
+
+  .movie-header {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem;
+    gap: 0.75rem;
+    background: linear-gradient(135deg, var(--color-bg-primary), var(--color-bg-tertiary));
+    border-bottom: 1px solid var(--border-color);
+    margin: -1rem -1rem 0 -1rem;
+  }
+
+  .movie-poster {
+    width: 60px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: var(--radius-sm);
+    flex-shrink: 0;
+    background: var(--color-bg-tertiary);
+  }
+
+  .movie-poster-placeholder {
+    width: 60px;
+    height: 80px;
+    background: linear-gradient(135deg, var(--color-bg-tertiary), var(--color-text-muted));
+    border-radius: var(--radius-sm);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: var(--color-text-secondary);
+  }
+
+  .movie-info {
+    flex: 1;
+  }
+
+  .movie-title {
+    font-size: 1.1rem;
+    font-weight: bold;
+    margin-bottom: 0.25rem;
+    color: var(--color-text-primary);
+  }
+
+  .movie-title a {
+    color: var(--color-text-primary);
+    text-decoration: none;
+  }
+
+  .movie-title a:hover {
+    color: var(--color-link);
+    text-decoration: underline;
+  }
+
+  .movie-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+    color: var(--color-text-secondary);
+    margin-bottom: 0.25rem;
+  }
+
+  .movie-meta span {
+    background: var(--color-bg-tertiary);
+    color: var(--color-text-secondary);
+    padding: 0.1rem 0.4rem;
+    border-radius: 12px;
+    font-size: 0.7rem;
+  }
+
+  .movie-intro {
+    font-size: 0.8rem;
+    color: var(--color-text-secondary);
+    line-height: 1.3;
+    max-height: calc(1.3em * 2);
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+
+  .shows {
+    padding: 0.5rem 0rem 0rem;
+  }
+
+  .shows-title {
+    font-size: 0.9rem;
+    font-weight: bold;
+    color: var(--color-text-primary);
+    margin-bottom: 0.5rem;
+  }
+
+  .show-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .show {
+    background: var(--color-bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    padding: 0.4rem 0.6rem;
+    font-size: 0.8rem;
+    transition: all 0.2s ease;
+    cursor: pointer;
+  }
+
+  .show:hover {
+    background: var(--color-bg-tertiary);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .show-time {
+    font-weight: bold;
+    color: var(--color-accent-primary);
+  }
+
+  .show-room {
+    color: var(--color-text-secondary);
+    font-size: 0.7rem;
+  }
+
+  .show-price {
+    color: var(--color-accent-success);
+    font-weight: 500;
+    font-size: 0.7rem;
+  }
+
+  .show-note {
+    color: var(--color-accent-danger);
+    font-size: 0.6rem;
+    font-style: italic;
+  }
+
+  .no-movies {
+    text-align: center;
+    color: var(--color-text-secondary);
+    padding: 2rem;
+    font-style: italic;
+  }
+
+  /* Genre color coding - using CSS variables where possible */
+  .movie[data-genre*="kauhu"] .movie-header {
+    background: linear-gradient(135deg, #f8d7da, #f5c6cb);
+  }
+
+  .movie[data-genre*="komedia"] .movie-header {
+    background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+  }
+
+  .movie[data-genre*="draama"] .movie-header {
+    background: linear-gradient(135deg, #d4edda, #c3e6cb);
+  }
+
+  .movie[data-genre*="animaatio"] .movie-header,
+  .movie[data-genre*="koko perheen"] .movie-header {
+    background: linear-gradient(135deg, #cce5ff, #b3d9ff);
+  }
+
+  .movie[data-genre*="toiminta"] .movie-header {
+    background: linear-gradient(135deg, #ffe0b3, #ffcc80);
+  }
+
+  /* Dark mode adjustments for genre colors */
+  [data-theme="dark"] .movie[data-genre*="kauhu"] .movie-header {
+    background: linear-gradient(135deg, #4a2c2a, #6a2e2a);
+  }
+
+  [data-theme="dark"] .movie[data-genre*="komedia"] .movie-header {
+    background: linear-gradient(135deg, #4a4a2a, #5a5a2a);
+  }
+
+  [data-theme="dark"] .movie[data-genre*="draama"] .movie-header {
+    background: linear-gradient(135deg, #2a4a2a, #2a5a2a);
+  }
+
+  [data-theme="dark"] .movie[data-genre*="animaatio"] .movie-header,
+  [data-theme="dark"] .movie[data-genre*="koko perheen"] .movie-header {
+    background: linear-gradient(135deg, #2a2a4a, #2a2a5a);
+  }
+
+  [data-theme="dark"] .movie[data-genre*="toiminta"] .movie-header {
+    background: linear-gradient(135deg, #4a4a2a, #5a4a2a);
+  }
+
+  /* Mobile responsive adjustments */
+  @media (max-width: 768px) {
+    .movie-header {
+      flex-direction: column;
+      text-align: center;
+      gap: 0.5rem;
+    }
+    
+    .movie-poster,
+    .movie-poster-placeholder {
+      width: 80px;
+      height: 100px;
+    }
+    
+    .show-list {
+      justify-content: center;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Add click handler for show times (future enhancement for direct booking)
+  document.querySelectorAll('.show').forEach(show => {
+    show.addEventListener('click', function() {
+      // Could link to booking page in the future
+      console.log('Show clicked:', this);
     });
-  </script>
-</body>
-</html>
+  });
+</script>
+{% endblock %}

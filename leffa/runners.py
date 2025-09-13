@@ -1,9 +1,10 @@
 import logging
-from config import register_runner
+import os
+from config import register_runner, get_output_dir
+from utils.renderers import render_html, save_file
 from .config import LeffaConfig
 from .fetch import fetch_movies
 from .transform import transform_movies
-from .render import render_movies
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +25,13 @@ def run_leffa_salo(params: LeffaConfig):
     
     # Render to HTML
     logger.info("Rendering movie listings to HTML")
-    output_file = render_movies(movie_data, params)
+    template_path = "leffa/template.html"
+    html = render_html(movie_data, template_path)
+    
+    # Use CLI output directory + runner name
+    output_dir = os.path.join(get_output_dir(), "leffa")
+    output_file = os.path.join(output_dir, "index.html")
+    save_file(output_file, html)
     
     logger.info(f"✅ Bio Salo movie listings pipeline completed successfully")
     logger.info(f"📁 Output: {output_file}")
