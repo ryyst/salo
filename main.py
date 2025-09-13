@@ -46,10 +46,14 @@ def create_parser():
 
     # Dev subcommand
     dev_parser = subparsers.add_parser("dev", help="Start development server")
-    dev_parser.add_argument("directory", help="Directory to serve")
     dev_parser.add_argument(
-        "port",
+        "directory",
         nargs="?",
+        default="_out",
+        help="Directory to serve (if not provided, serves all apps from _out)",
+    )
+    dev_parser.add_argument(
+        "--port",
         type=int,
         default=8000,
         help="Port to serve on (default: 8000)",
@@ -110,7 +114,6 @@ def handle_runners(args):
 
 
 def main():
-
     parser = create_parser()
     args = parser.parse_args()
 
