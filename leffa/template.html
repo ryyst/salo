@@ -91,6 +91,16 @@
           color: #212529;
         }
 
+        .movie-title a {
+          color: #212529;
+          text-decoration: none;
+        }
+
+        .movie-title a:hover {
+          color: #007bff;
+          text-decoration: underline;
+        }
+
         .movie-meta {
           display: flex;
           flex-wrap: wrap;
@@ -220,7 +230,9 @@
           {% endif %}
           
           <div class="movie-info">
-            <div class="movie-title">{{ movie.title }}</div>
+            <div class="movie-title">
+              <a href="https://biosalo.fi/elokuva/?movie={{ movie.id }}" target="_blank">{{ movie.title }}</a>
+            </div>
             
             <div class="movie-meta">
               {% if movie.genre %}<span>{{ movie.genre }}</span>{% endif %}

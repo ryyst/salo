@@ -80,7 +80,10 @@ def transform_movies(raw_data: Dict[str, Any], config: LeffaConfig) -> LeffaData
             # Create show object
             try:
                 show_time = datetime.strptime(show_data.get('startTime', ''), '%Y-%m-%d %H:%M:%S')
-                formatted_time = show_time.strftime('%d.%m. klo %H:%M')
+                # Finnish weekday abbreviations
+                weekdays = ['Ma', 'Ti', 'Ke', 'To', 'Pe', 'La', 'Su']
+                weekday = weekdays[show_time.weekday()]
+                formatted_time = f"{weekday} {show_time.strftime('%d.%m. klo %H:%M')}"
             except ValueError:
                 formatted_time = show_data.get('klo', '')
                 
