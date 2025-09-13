@@ -132,33 +132,36 @@ def execute_runner(
         # Set global CLI context
         set_cli_context(output_dir, cache_dir, ignore_cache)
 
-        print("Loading config file:", config_path)
+        Log.info("---------------")
+        Log.info("Loading config file: %s", config_path)
         with open(config_path, "r") as f:
             config_data = json.load(f)
 
-        print("Validating parameters for runner:", name)
+        Log.info("Validating parameters for runner: %s", name)
         params = runner_info.config_class(**config_data)
 
-        print("Executing runner:", name)
+        Log.info("Executing runner: %s", name)
         runner_info.function(params)
 
-        print("Runner completed successfully:", name)
+        Log.info("Runner completed successfully: %s", name)
         return True
 
     except FileNotFoundError:
-        print("Config file not found:", config_path)
-        print("")
-        print("To create a config file, see the expected schema:")
-        print("  python main.py runners", name)
-        print("")
-        print("Then create your config file with the required parameters:")
-        print("  echo '{}' > %s" % config_path)
-        print("  # Edit %s with your actual configuration" % config_path)
+        Log.info("Config file not found: %s", config_path)
+        Log.info("")
+        Log.info("To create a config file, see the expected schema:")
+        Log.info("  python main.py runners %s", name)
+        Log.info("")
+        Log.info("Then create your config file with the required parameters:")
+        Log.info("  echo '{}' > %s", config_path)
+        Log.info("  # Edit %s with your actual configuration", config_path)
         return False
     except ValidationError as err:
-        print("Configuration validation failed for runner '%s':" % name)
+        Log.error("Configuration validation failed for runner '%s':", name)
         for e in err.errors():
-            print("  %s: %s", ".".join(str(p) for p in e.get("loc", [])), e.get("msg"))
+            Log.error(
+                "  %s: %s", ".".join(str(p) for p in e.get("loc", [])), e.get("msg")
+            )
         return False
     except KeyboardInterrupt:
         Log.warning("Runner '%s' was interrupted" % name)

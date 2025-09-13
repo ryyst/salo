@@ -11,6 +11,7 @@ import auki.runners  # noqa
 import swimmi.runners  # noqa
 import tori.runners  # noqa
 import leffa.runners  # noqa
+import koje.runners  # noqa
 
 
 def create_parser():

@@ -8,6 +8,7 @@ requests = "*"
 jinja2 = "*"
 pydantic = "*"
 beautifulsoup4 = "*"
+watchdog = "*"
 
 [dev-packages]
 

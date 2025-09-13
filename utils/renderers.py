@@ -5,7 +5,9 @@ from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 from utils.logging import Log
 
-jinja = Environment(loader=FileSystemLoader([".", "templates"]), autoescape=select_autoescape())
+jinja = Environment(
+    loader=FileSystemLoader([".", "templates"]), autoescape=select_autoescape()
+)
 
 
 #
@@ -34,4 +36,4 @@ def save_file(output_file: str, data: str):
     # Print clickable file URL for HTML files
     if output_file.endswith(".html"):
         abs_path = os.path.abspath(output_file)
-        Log.info(f"file://{abs_path}")
+        Log.info(f"Link: file://{abs_path}")
