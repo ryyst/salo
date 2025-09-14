@@ -1,4 +1,3 @@
-import os
 import time
 import threading
 from pathlib import Path
@@ -7,13 +6,26 @@ from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
 from utils.logging import Log
-from config import execute_runner, list_runners
+from config import execute_runner
+from utils.paths import (
+    is_ignored_path,
+    get_module_from_path,
+    is_shared_module_path,
+    get_config_path,
+    config_exists,
+)
+from utils.constants import (
+    DEFAULT_DEBOUNCE_DELAY,
+    DEFAULT_OUTPUT_DIR,
+    DEFAULT_CACHE_DIR,
+)
+from config import list_runners
 
 
 class RunnerFileWatcher(FileSystemEventHandler):
     """File system event handler that triggers appropriate runners on file changes"""
 
-    def __init__(self, debounce_delay: float = 2.0):
+    def __init__(self, debounce_delay: float = DEFAULT_DEBOUNCE_DELAY):
         super().__init__()
         self.debounce_delay = debounce_delay
         self.pending_runners: Set[str] = set()
@@ -23,51 +35,30 @@ class RunnerFileWatcher(FileSystemEventHandler):
         # Get available runners dynamically
         self.available_runners = set(list_runners().keys())
 
-        # Shared directories that affect all runners
-        self.shared_dirs = {"utils", "templates", "api"}
-
     def on_modified(self, event):
         if event.is_directory:
             return
 
-        # Get the module directory from the path
         file_path = Path(event.src_path)
 
-        # Skip cache and output directories
-        if "_cache" in file_path.parts or "_out" in file_path.parts:
-            return
-
-        # Skip hidden files and temporary files
-        if any(part.startswith(".") for part in file_path.parts):
-            return
-        if file_path.name.endswith((".tmp", ".swp", "~")):
+        # Skip ignored paths (cache, output, hidden files, etc.)
+        if is_ignored_path(file_path):
             return
 
         # Check if this is a change in a shared directory
-        shared_change = False
-        for part in file_path.parts:
-            if part in self.shared_dirs:
-                shared_change = True
-                break
-
-        if shared_change:
+        if is_shared_module_path(file_path):
             Log.info(f"Shared file changed: {event.src_path}")
             self.schedule_all_runners()
             return
 
-        # Determine which specific runner to trigger by checking if any directory
-        # in the path matches an available runner name
-        runner_name = None
-        for part in file_path.parts:
-            if part in self.available_runners:
-                runner_name = part
-                break
+        # Determine which specific runner to trigger
+        runner_name = get_module_from_path(file_path, self.available_runners)
 
         if runner_name:
             Log.info(f"File changed in {runner_name}/: {event.src_path}")
             self.schedule_runner(runner_name)
         else:
-            # If no specific runner found, check if it's a root level change that should trigger all
+            # If no specific runner found, it's a root level change that should trigger all
             Log.info(f"Root level file changed: {event.src_path}")
             self.schedule_all_runners()
 
@@ -107,26 +98,21 @@ class RunnerFileWatcher(FileSystemEventHandler):
         runners_to_execute = self.pending_runners.copy()
         self.pending_runners.clear()
 
+        from config import CLI_CONTEXT
+
         for runner_name in sorted(runners_to_execute):
-            Log.info(f"Auto-executing runner: {runner_name}")
+            config_path = get_config_path(runner_name, CLI_CONTEXT.config_dir)
 
-            # Use default config file
-            config_file = f"_confs/{runner_name}.json"
+            if config_exists(runner_name, CLI_CONTEXT.config_dir):
+                Log.info(f"Auto-executing runner: {runner_name}")
+                success = execute_runner(runner_name, config_path)
 
-            if os.path.exists(config_file):
-                success = execute_runner(
-                    runner_name,
-                    config_file,
-                    "_out",
-                    "_cache",
-                    False,  # don't ignore cache
-                )
                 if success:
                     Log.info(f"Runner {runner_name} completed successfully")
                 else:
                     Log.error(f"Runner {runner_name} failed")
             else:
-                Log.warning(f"Config file not found for runner {runner_name}: {config_file}")
+                Log.warning(f"Config file not found for runner {runner_name}: {config_path}")
 
 
 def start_file_watcher(watch_directory: str = ".") -> Observer:

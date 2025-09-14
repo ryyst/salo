@@ -1,10 +1,17 @@
 #!/usr/bin/env python3
-import os
 import sys
 import argparse
 
 from utils.devserver import host_dev_server
-from config import list_runners, format_runner_schema, execute_runner
+from utils.constants import DEFAULT_OUTPUT_DIR, DEFAULT_CACHE_DIR, DEFAULT_DEV_PORT
+from config import (
+    list_runners,
+    format_runner_schema,
+    set_cli_context,
+    get_runner_default_config,
+    execute_runner,
+    execute_all_runners,
+)
 
 # Import all runner modules to register individual runner functions
 import auki.runners  # noqa
@@ -32,13 +39,13 @@ def create_parser():
     )
     runners_parser.add_argument(
         "--output-dir",
-        default="_out",
-        help="Base output directory for generated files (default: _out)",
+        default=DEFAULT_OUTPUT_DIR,
+        help=f"Base output directory for generated files (default: {DEFAULT_OUTPUT_DIR})",
     )
     runners_parser.add_argument(
         "--cache-dir",
-        default="_cache",
-        help="Cache directory for storing temporary data (default: _cache)",
+        default=DEFAULT_CACHE_DIR,
+        help=f"Cache directory for storing temporary data (default: {DEFAULT_CACHE_DIR})",
     )
     runners_parser.add_argument(
         "--ignore-cache",
@@ -51,55 +58,17 @@ def create_parser():
     dev_parser.add_argument(
         "directory",
         nargs="?",
-        default="_out",
-        help="Directory to serve (if not provided, serves all apps from _out)",
+        default=DEFAULT_OUTPUT_DIR,
+        help=f"Directory to serve (if not provided, serves all apps from {DEFAULT_OUTPUT_DIR})",
     )
     dev_parser.add_argument(
         "--port",
         type=int,
-        default=8000,
-        help="Port to serve on (default: 8000)",
+        default=DEFAULT_DEV_PORT,
+        help=f"Port to serve on (default: {DEFAULT_DEV_PORT})",
     )
 
     return parser
-
-
-def execute_single_runner(runner_name, args):
-    """Execute a single runner with config resolution"""
-    # Determine config file path
-    if args.params:
-        # Explicit config file provided
-        config_file = args.params
-    else:
-        # No --params provided, check if default config exists
-        default_config = f"_confs/{runner_name}.json"
-
-        # Check if default config file exists
-        if os.path.exists(default_config):
-            # Use default config file
-            config_file = default_config
-        else:
-            # No default config found, show schema
-            schema_display = format_runner_schema(runner_name)
-
-            if schema_display is None:
-                print(f"Unknown runner: {runner_name}")
-                print("Available runners:")
-                for name in list_runners().keys():
-                    print(f"  {name}")
-                return False
-
-            print(schema_display)
-            return False
-
-    # Execute the runner with config file
-    return execute_runner(
-        runner_name,
-        config_file,
-        args.output_dir,
-        args.cache_dir,
-        args.ignore_cache,
-    )
 
 
 def handle_runners(args):
@@ -119,36 +88,28 @@ def handle_runners(args):
 
     # Handle special "all" runner
     if args.runner_name == "all":
+        success = execute_all_runners()
+        sys.exit(0 if success else 1)
+
+    config_path = args.params or get_runner_default_config(args.runner_name)
+
+    if config_path is None:
+        # Check if runner exists
         runners = list_runners()
-        if not runners:
-            print("No runners registered. Make sure to import all modules.")
+        if args.runner_name not in runners:
+            print(f"Unknown runner: {args.runner_name}")
+            print("Available runners:")
+            for name in runners.keys():
+                print(f"  {name}")
             sys.exit(1)
 
-        all_success = True
-        for runner_name in runners.keys():
-            print(f"\n{'='*50}")
-            print(f"Executing runner: {runner_name}")
-            print(f"{'='*50}")
+        # Show schema instead
+        schema_display = format_runner_schema(args.runner_name)
+        print(schema_display)
+        sys.exit(1)
 
-            # Create a copy of args but override params to None for default config resolution
-            runner_args = argparse.Namespace(**vars(args))
-            runner_args.params = None
-
-            success = execute_single_runner(runner_name, runner_args)
-            if not success:
-                all_success = False
-                print(f"Runner '{runner_name}' failed or skipped")
-            else:
-                print(f"Runner '{runner_name}' completed successfully")
-
-        print(f"\n{'='*50}")
-        print("All runners execution summary completed")
-        print(f"{'='*50}")
-
-        sys.exit(0 if all_success else 1)
-
-    # Execute single runner
-    success = execute_single_runner(args.runner_name, args)
+    set_cli_context(args.output_dir, args.cache_dir, args.ignore_cache, config_path)
+    success = execute_runner(args.runner_name, config_path)
     sys.exit(0 if success else 1)
 
 

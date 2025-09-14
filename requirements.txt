@@ -11,3 +11,4 @@ requests==2.32.3; python_version >= '3.8'
 typing-extensions==4.12.2; python_version < '3.13'
 urllib3==2.2.3; python_version >= '3.8'
 beautifulsoup4==4.12.3; python_version >= '3.6'
+watchdog>=3.0.0

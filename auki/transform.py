@@ -24,7 +24,7 @@ def transform_combined(data: RawData, params: AukiConfig):
 
     return {
         "places": places,
-        "updated_timestamp": datetime.now().strftime("%d.%m.%Y klo %H:%M")
+        "updated_timestamp": datetime.now().strftime("%d.%m.%Y klo %H:%M"),
     }
 
 

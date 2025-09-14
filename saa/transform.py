@@ -142,7 +142,8 @@ def parse_weather_xml(xml_string: str) -> Dict[str, Any]:
 
         # Convert to sorted list
         sorted_times = sorted(
-            data_by_time.keys(), key=lambda x: datetime.fromisoformat(x.replace("Z", "+00:00"))
+            data_by_time.keys(),
+            key=lambda x: datetime.fromisoformat(x.replace("Z", "+00:00")),
         )
         sorted_data = [data_by_time[time_str] for time_str in sorted_times]
 

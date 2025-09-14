@@ -54,6 +54,4 @@ def run_saa(config: SaaConfig):
     save_file(output_path, html_content)
 
     Log.info(f"Weather forecast generated successfully at {output_path}")
-    Log.info(
-        f"Forecast covers {len(forecast_data)} time points over {config.future_hours} hours"
-    )
+    Log.info(f"Forecast covers {len(forecast_data)} time points over {config.future_hours} hours")

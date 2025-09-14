@@ -17,10 +17,7 @@ def calculate_distance(lat1, lon1, lat2, lon2):
     # Haversine formula
     dlat = lat2 - lat1
     dlon = lon2 - lon1
-    a = (
-        math.sin(dlat / 2) ** 2
-        + math.cos(lat1) * math.cos(lat2) * math.sin(dlon / 2) ** 2
-    )
+    a = math.sin(dlat / 2) ** 2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon / 2) ** 2
     c = 2 * math.asin(math.sqrt(a))
 
     # Radius of earth in kilometers
@@ -107,9 +104,7 @@ def transform_events(data: RawData, params: ToriConfig):
                 "is_long_running": is_long_running,
                 "days_remaining": days_remaining,
                 "days_until_start": days_until_start,
-                "event_type": (
-                    "ongoing" if (is_ongoing and is_long_running) else "upcoming"
-                ),
+                "event_type": ("ongoing" if (is_ongoing and is_long_running) else "upcoming"),
             }
         )
 
@@ -124,5 +119,5 @@ def transform_events(data: RawData, params: ToriConfig):
         "ongoing": ongoing_events,
         "upcoming": upcoming_events,
         "page_header": params.page_header,
-        "updated_timestamp": datetime.now().strftime("%d.%m.%Y klo %H:%M")
+        "updated_timestamp": datetime.now().strftime("%d.%m.%Y klo %H:%M"),
     }

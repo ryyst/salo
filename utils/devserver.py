@@ -1,9 +1,16 @@
 import os
-from config import list_runners, execute_runner
 from http.server import SimpleHTTPRequestHandler, HTTPServer
 
 from utils.watcher import start_file_watcher
 from utils.logging import Log
+from config import execute_all_runners, set_cli_context
+from utils.paths import (
+    get_app_index_path,
+    get_koje_static_path,
+    resolve_app_file_path,
+    get_content_type_from_path,
+)
+from utils.constants import KOJE_STATIC_FILES
 
 
 class MultiAppHandler(SimpleHTTPRequestHandler):
@@ -23,55 +30,31 @@ class MultiAppHandler(SimpleHTTPRequestHandler):
         app_name = path_parts[0]
 
         # Check if this is a static file request that should come from koje
-        static_files = [
-            "manifest.json",
-            "icon-192.png",
-            "icon-512.png",
-            "sw.js",
-            "CNAME",
-        ]
-        if app_name in static_files:
+        if app_name in KOJE_STATIC_FILES:
             if self.serve_static_from_koje(app_name):
                 return
 
-        app_dir = os.path.join(self.out_directory, app_name)
+        # Build the relative path within the app
+        relative_path = "/".join(path_parts[1:]) if len(path_parts) > 1 else ""
+        file_path = resolve_app_file_path(app_name, relative_path, self.out_directory)
 
-        if os.path.isdir(app_dir):
-            # Build the relative path within the app
-            if len(path_parts) == 1 or (len(path_parts) == 2 and not path_parts[1]):
-                # Just /appname or /appname/, serve index.html
-                file_path = os.path.join(app_dir, "index.html")
-            else:
-                # /appname/file.html or /appname/subpath
-                relative_path = "/".join(path_parts[1:])
-                if relative_path.endswith("/"):
-                    relative_path += "index.html"
-                elif (
-                    not relative_path.endswith(".html")
-                    and not os.path.exists(os.path.join(app_dir, relative_path))
-                    and os.path.exists(os.path.join(app_dir, relative_path + ".html"))
-                ):
-                    relative_path += ".html"
-                file_path = os.path.join(app_dir, relative_path)
-
-            if os.path.exists(file_path):
-                # Serve the file from the app directory
-                with open(file_path, "rb") as f:
-                    content = f.read()
-                    self.send_response(200)
-                    if file_path.endswith(".html"):
-                        self.send_header("Content-Type", "text/html")
-                    elif file_path.endswith(".css"):
-                        self.send_header("Content-Type", "text/css")
-                    elif file_path.endswith(".js"):
-                        self.send_header("Content-Type", "application/javascript")
-                    self.send_header("Content-Length", str(len(content)))
-                    self.end_headers()
-                    self.wfile.write(content)
-                return
+        if file_path:
+            self.serve_file(file_path)
+            return
 
         # File not found
         self.send_error(404, f"File not found: {self.path}")
+
+    def serve_file(self, file_path: str):
+        """Serve a file with appropriate content type."""
+        with open(file_path, "rb") as f:
+            content = f.read()
+            self.send_response(200)
+            content_type = get_content_type_from_path(file_path)
+            self.send_header("Content-Type", content_type)
+            self.send_header("Content-Length", str(len(content)))
+            self.end_headers()
+            self.wfile.write(content)
 
     def serve_app_listing(self):
         """Serve a simple HTML listing of available applications"""
@@ -118,75 +101,34 @@ class MultiAppHandler(SimpleHTTPRequestHandler):
 
     def serve_koje_as_root(self):
         """Serve the koje dashboard as the root index"""
-        koje_path = os.path.join(self.out_directory, "koje", "index.html")
+        koje_path = get_app_index_path("koje", self.out_directory)
 
         if os.path.exists(koje_path):
-            with open(koje_path, "rb") as f:
-                content = f.read()
-                self.send_response(200)
-                self.send_header("Content-Type", "text/html")
-                self.send_header("Content-Length", str(len(content)))
-                self.end_headers()
-                self.wfile.write(content)
+            self.serve_file(koje_path)
         else:
             # Fallback to app listing if koje doesn't exist
             self.serve_app_listing()
 
     def serve_static_from_koje(self, filename):
         """Serve static files (icons, manifest, etc.) from koje directory"""
-        static_path = os.path.join(self.out_directory, "koje", filename)
+        static_path = get_koje_static_path(filename, self.out_directory)
 
         if os.path.exists(static_path):
-            with open(static_path, "rb") as f:
-                content = f.read()
-                self.send_response(200)
-
-                # Set appropriate content type
-                if filename.endswith(".json"):
-                    self.send_header("Content-Type", "application/json")
-                elif filename.endswith(".png"):
-                    self.send_header("Content-Type", "image/png")
-                elif filename.endswith(".js"):
-                    self.send_header("Content-Type", "application/javascript")
-                else:
-                    self.send_header("Content-Type", "application/octet-stream")
-
-                self.send_header("Content-Length", str(len(content)))
-                self.end_headers()
-                self.wfile.write(content)
-                return True
+            self.serve_file(static_path)
+            return True
         return False
 
 
-def host_dev_server(out_directory: str = "_out", port: int = 8000):
+def host_dev_server(out_directory: str, port: int):
     """Host a multi-app development server serving all apps from _out directory."""
+    from utils.constants import DEFAULT_CACHE_DIR, DEFAULT_DEV_HOST
+
     try:
         # Build all applications first
         Log.info("Building all applications...")
 
-        all_success = True
-        runners = list_runners()
-
-        for runner_name in runners.keys():
-            default_config = f"_confs/{runner_name}.json"
-
-            if not os.path.exists(default_config):
-                Log.warning(
-                    f"Skipping runner '{runner_name}': config file not found at {default_config}"
-                )
-                continue
-
-            success = execute_runner(
-                runner_name,
-                default_config,
-                out_directory,
-                "_cache",
-                False,  # don't ignore cache
-            )
-
-            if not success:
-                all_success = False
-                Log.error(f"Initial build failed for runner '{runner_name}'")
+        set_cli_context(out_directory, DEFAULT_CACHE_DIR, ignore_cache=False)
+        all_success = execute_all_runners()
 
         if not all_success:
             Log.error("Some applications failed to build initially")
@@ -199,8 +141,8 @@ def host_dev_server(out_directory: str = "_out", port: int = 8000):
         def handler_factory(*args, **kwargs):
             return MultiAppHandler(*args, out_directory=out_directory, **kwargs)
 
-        server = HTTPServer(("localhost", port), handler_factory)
-        Log.info(f"Serving all apps from {out_directory} at http://localhost:{port}")
+        server = HTTPServer((DEFAULT_DEV_HOST, port), handler_factory)
+        Log.info(f"Serving all apps from {out_directory} at http://{DEFAULT_DEV_HOST}:{port}")
         Log.info("File watcher active - changes will trigger automatic rebuilds")
         server.serve_forever()
 
