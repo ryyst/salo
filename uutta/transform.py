@@ -74,8 +74,6 @@ def transform_articles(
         if not should_include_article(article, params):
             continue
 
-        print("this got through:", article.get("categories"), article.get("title"))
-
         try:
             pub_date = parse_date(article.get("pub_date", ""))
 

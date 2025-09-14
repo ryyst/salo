@@ -117,6 +117,171 @@
             transform: scale(1.1);
         }
 
+        .hamburger-btn {
+            flex: 0 0 auto;
+            width: 47px;
+            height: 47px;
+            background: var(--bg-secondary);
+            border: none;
+            border-right: 2px solid var(--border-color);
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            transition: all 0.2s ease;
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+
+        .hamburger-btn:hover {
+            background: var(--hover-bg);
+            color: var(--text-primary);
+        }
+
+        .hamburger-btn.active {
+            color: var(--accent-color);
+            background: var(--accent-bg);
+        }
+
+        .app-menu {
+            position: fixed;
+            bottom: 57px;
+            left: 10px;
+            width: 280px;
+            max-height: 70vh;
+            background: var(--bg-secondary);
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            box-shadow: 0 8px 24px var(--shadow-color);
+            z-index: 140;
+            opacity: 0;
+            transform: translateY(20px) scale(0.9);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .app-menu.show {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+            pointer-events: all;
+        }
+
+        .app-menu-header {
+            padding: 16px;
+            border-bottom: 1px solid var(--border-color);
+            font-weight: 600;
+            color: var(--text-primary);
+            background: var(--hover-bg);
+        }
+
+        .app-list {
+            max-height: calc(70vh - 120px);
+            overflow-y: auto;
+            padding: 8px;
+        }
+
+        .app-item {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            gap: 12px;
+        }
+
+        .app-item:hover {
+            background: var(--hover-bg);
+        }
+
+        .app-item.active {
+            background: var(--accent-bg);
+            color: var(--accent-color);
+        }
+
+        .app-icon {
+            font-size: 18px;
+            width: 24px;
+            text-align: center;
+        }
+
+        .app-title {
+            flex: 1;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .star-btn {
+            width: 24px;
+            height: 24px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.2s ease;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .star-btn:hover {
+            background: var(--hover-bg);
+            transform: scale(1.1);
+        }
+
+        .star-btn.favorited {
+            color: #ffc107;
+        }
+
+        .menu-theme-section {
+            padding: 16px;
+            border-top: 1px solid var(--border-color);
+            background: var(--hover-bg);
+        }
+
+        .menu-theme-toggle {
+            width: 100%;
+            padding: 12px;
+            background: var(--bg-secondary);
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-primary);
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .menu-theme-toggle:hover {
+            background: var(--hover-bg);
+            transform: translateY(-1px);
+        }
+
+        .menu-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: transparent;
+            z-index: 130; /* Above iframes (20) but below menu (140) */
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .menu-overlay.show {
+            opacity: 1;
+            pointer-events: all;
+        }
+
         @media (max-width: 600px) {
             body {
                 overflow: hidden;
@@ -203,7 +368,11 @@
             }
 
             .theme-toggle {
-                bottom: 67px; /* Above mobile tab bar */
+                display: none !important; /* Hide desktop theme toggle on mobile */
+            }
+
+            .hamburger-btn {
+                display: flex; /* Show hamburger button on mobile */
             }
         }
     </style>
@@ -217,10 +386,22 @@
         {% endfor %}
     </div>
 
-    <div class="tab-bar">
-        {% for iframe in data.iframes %}
-        <a href="#{{ iframe.id }}" class="tab-btn{% if loop.first %} active{% endif %}">{{ iframe.title }}</a>
-        {% endfor %}
+    <div class="tab-bar" id="tabBar">
+        <button class="hamburger-btn" onclick="appMenu.toggle()" id="hamburgerBtn">☰</button>
+        <!-- Favorites will be populated here by JavaScript -->
+    </div>
+
+    <div class="menu-overlay" id="menuOverlay" onclick="appMenu.close()"></div>
+
+    <div class="app-menu" id="appMenu">
+        <div class="app-list" id="appList">
+            <!-- Apps will be populated here by JavaScript -->
+        </div>
+        <div class="menu-theme-section">
+            <button class="menu-theme-toggle" onclick="themeManager.toggleTheme()" id="menuThemeToggle">
+                🌓 <span>Vaihda teemaa</span>
+            </button>
+        </div>
     </div>
 
     <button class="theme-toggle" onclick="themeManager.toggleTheme()">🌓</button>
@@ -228,6 +409,184 @@
     <script>
         const VERSION = "{{ '%d'|format(range(1000000000, 9999999999)|random) }}"
         console.log('Version:', VERSION);
+
+        // Application data
+        const APPS = {{ data.iframes | tojson }};
+        const DEFAULT_FAVORITES = ['saa', 'uimahalli', 'uutta', 'auki']; // Pre-selected defaults
+
+        // Favorites Management
+        class FavoritesManager {
+            constructor() {
+                this.storageKey = 'salo-favorites';
+                this.favorites = this.loadFavorites();
+            }
+
+            loadFavorites() {
+                try {
+                    const stored = localStorage.getItem(this.storageKey);
+                    return stored ? JSON.parse(stored) : [...DEFAULT_FAVORITES];
+                } catch (error) {
+                    console.error('Error loading favorites:', error);
+                    return [...DEFAULT_FAVORITES];
+                }
+            }
+
+            saveFavorites() {
+                try {
+                    localStorage.setItem(this.storageKey, JSON.stringify(this.favorites));
+                } catch (error) {
+                    console.error('Error saving favorites:', error);
+                }
+            }
+
+            isFavorited(appId) {
+                return this.favorites.includes(appId);
+            }
+
+            toggleFavorite(appId) {
+                const index = this.favorites.indexOf(appId);
+                if (index === -1) {
+                    this.favorites.push(appId);
+                } else {
+                    this.favorites.splice(index, 1);
+                }
+                this.saveFavorites();
+                this.updateUI();
+            }
+
+            getFavorites() {
+                return this.favorites;
+            }
+
+            updateUI() {
+                appMenu.updateAppList();
+                appMenu.updateTabBar();
+            }
+        }
+
+        // App Menu Management
+        class AppMenuManager {
+            constructor() {
+                this.menuElement = document.getElementById('appMenu');
+                this.appListElement = document.getElementById('appList');
+                this.tabBarElement = document.getElementById('tabBar');
+                this.hamburgerBtn = document.getElementById('hamburgerBtn');
+                this.overlayElement = document.getElementById('menuOverlay');
+                this.isOpen = false;
+                this.currentApp = null;
+
+                this.bindEvents();
+                this.updateAppList();
+                this.updateTabBar();
+            }
+
+            bindEvents() {
+                // Close menu when clicking outside (use timeout to avoid conflict with hamburger click)
+                document.addEventListener('click', (e) => {
+                    if (this.isOpen && !this.menuElement.contains(e.target) && !e.target.matches('#hamburgerBtn')) {
+                        this.close();
+                    }
+                });
+
+                // Close menu on escape key
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape' && this.isOpen) {
+                        this.close();
+                    }
+                });
+
+                // Handle mobile back button for PWA
+                window.addEventListener('popstate', (e) => {
+                    if (this.isOpen) {
+                        e.preventDefault();
+                        this.close();
+                        // Push a new state to prevent actual navigation
+                        history.pushState({ menuOpen: false }, '', window.location.href);
+                    }
+                });
+            }
+
+            toggle() {
+                this.isOpen ? this.close() : this.open();
+            }
+
+            open() {
+                this.isOpen = true;
+                this.menuElement.classList.add('show');
+                this.overlayElement.classList.add('show');
+                this.hamburgerBtn.classList.add('active');
+                this.updateAppList(); // Refresh app states
+
+                // Push history state for back button support
+                history.pushState({ menuOpen: true }, '', window.location.href);
+            }
+
+            close() {
+                this.isOpen = false;
+                this.menuElement.classList.remove('show');
+                this.overlayElement.classList.remove('show');
+                this.hamburgerBtn.classList.remove('active');
+            }
+
+            updateAppList() {
+                this.appListElement.innerHTML = '';
+
+                APPS.forEach(app => {
+                    const appItem = document.createElement('div');
+                    appItem.className = `app-item${this.currentApp === app.id ? ' active' : ''}`;
+                    appItem.onclick = () => {
+                        showTab(app.id);
+                        this.close();
+                    };
+
+                    // Extract emoji and text from title
+                    const titleParts = app.title.split(' ');
+                    const emoji = titleParts[0];
+                    const text = titleParts.slice(1).join(' ');
+
+                    appItem.innerHTML = `
+                        <span class="app-icon">${emoji}</span>
+                        <span class="app-title">${text}</span>
+                        <button class="star-btn${favoritesManager.isFavorited(app.id) ? ' favorited' : ''}"
+                                onclick="event.stopPropagation(); favoritesManager.toggleFavorite('${app.id}')">
+                            ${favoritesManager.isFavorited(app.id) ? '⭐' : '☆'}
+                        </button>
+                    `;
+
+                    this.appListElement.appendChild(appItem);
+                });
+            }
+
+            updateTabBar() {
+                // Clear only the tab buttons, preserve hamburger button
+                const existingTabs = this.tabBarElement.querySelectorAll('.tab-btn');
+                existingTabs.forEach(tab => tab.remove());
+
+                const favoriteApps = APPS.filter(app => favoritesManager.isFavorited(app.id));
+
+                favoriteApps.forEach((app, index) => {
+                    const tabBtn = document.createElement('a');
+                    tabBtn.href = `#${app.id}`;
+                    tabBtn.className = `tab-btn${index === 0 ? ' active' : ''}`;
+                    tabBtn.textContent = app.title;
+                    tabBtn.onclick = (e) => {
+                        e.preventDefault();
+                        showTab(app.id);
+                    };
+
+                    this.tabBarElement.appendChild(tabBtn);
+                });
+            }
+
+            setCurrentApp(appId) {
+                this.currentApp = appId;
+                this.updateAppList();
+            }
+        }
+
+        // Initialize managers
+        const favoritesManager = new FavoritesManager();
+        const appMenu = new AppMenuManager();
 
         function showTab(targetId) {
             // Hide all panels
@@ -248,6 +607,9 @@
                     btn.classList.add('active');
                 }
             });
+
+            // Update app menu current app
+            appMenu.setCurrentApp(targetId);
         }
 
         // Show first tab by default or handle existing hash
@@ -256,9 +618,13 @@
             if (hash && document.getElementById(hash)) {
                 showTab(hash);
             } else {
-                {% if data.iframes %}
-                showTab('{{ data.iframes[0].id }}');
-                {% endif %}
+                // Show first favorited app or first available app
+                const favorites = favoritesManager.getFavorites();
+                const firstFavorite = favorites.find(fav => APPS.some(app => app.id === fav));
+                const defaultApp = firstFavorite || (APPS.length > 0 ? APPS[0].id : null);
+                if (defaultApp) {
+                    showTab(defaultApp);
+                }
             }
         });
 
