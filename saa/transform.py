@@ -1,6 +1,6 @@
 import xml.etree.ElementTree as ET
 from datetime import datetime
-from typing import List, Dict, Any, Optional
+from typing import Dict, Any, Optional
 from utils.logging import Log
 
 logger = Log
@@ -95,7 +95,9 @@ def parse_weather_xml(xml_string: str) -> Dict[str, Any]:
             observed_property = obs.find(".//om:observedProperty", namespaces)
             property_href = ""
             if observed_property is not None:
-                property_href = observed_property.get("{http://www.w3.org/1999/xlink}href", "")
+                property_href = observed_property.get(
+                    "{http://www.w3.org/1999/xlink}href", ""
+                )
 
             # Find all measurement points in this observation
             points = obs.findall(".//wml2:point", namespaces)
@@ -129,16 +131,22 @@ def parse_weather_xml(xml_string: str) -> Dict[str, Any]:
                         data_by_time[time_str]["temperature"] = value
                     elif "Precipitation1h" in property_href:
                         # Handle NaN precipitation values by treating them as 0
-                        data_by_time[time_str]["precipitation"] = value if value is not None else 0
+                        data_by_time[time_str]["precipitation"] = (
+                            value if value is not None else 0
+                        )
                     elif "PoP" in property_href:
                         # Handle NaN probability values by treating them as 0%
                         data_by_time[time_str]["precipitation_probability"] = (
                             value if value is not None else 0
                         )
                     elif "WindSpeedMS" in property_href:
-                        data_by_time[time_str]["wind_speed"] = value if value is not None else 0
+                        data_by_time[time_str]["wind_speed"] = (
+                            value if value is not None else 0
+                        )
                     elif "WindDirection" in property_href:
-                        data_by_time[time_str]["wind_direction"] = value if value is not None else 0
+                        data_by_time[time_str]["wind_direction"] = (
+                            value if value is not None else 0
+                        )
 
         # Convert to sorted list
         sorted_times = sorted(
@@ -160,7 +168,9 @@ def parse_weather_xml(xml_string: str) -> Dict[str, Any]:
 
         # Add wind direction text
         for point in sorted_data:
-            point["wind_direction_text"] = get_wind_direction_text(point["wind_direction"])
+            point["wind_direction_text"] = get_wind_direction_text(
+                point["wind_direction"]
+            )
 
         logger.info(f"Parsed {len(sorted_data)} weather forecast points")
 
@@ -174,7 +184,9 @@ def parse_weather_xml(xml_string: str) -> Dict[str, Any]:
         return {"data": [], "station_info": None}
 
 
-def extract_station_info(root: ET.Element, namespaces: Dict[str, str]) -> Optional[Dict[str, str]]:
+def extract_station_info(
+    root: ET.Element, namespaces: Dict[str, str]
+) -> Optional[Dict[str, str]]:
     """Extract station information from XML root."""
     try:
         # Look for station name and info in various places

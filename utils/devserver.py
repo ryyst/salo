@@ -46,13 +46,17 @@ class MultiAppHandler(SimpleHTTPRequestHandler):
         self.send_error(404, f"File not found: {self.path}")
 
     def serve_file(self, file_path: str):
-        """Serve a file with appropriate content type."""
+        """Serve a file with appropriate content type and no-cache headers."""
         with open(file_path, "rb") as f:
             content = f.read()
             self.send_response(200)
             content_type = get_content_type_from_path(file_path)
             self.send_header("Content-Type", content_type)
             self.send_header("Content-Length", str(len(content)))
+            # Disable caching for dev server
+            self.send_header("Cache-Control", "no-cache, no-store, must-revalidate")
+            self.send_header("Pragma", "no-cache")
+            self.send_header("Expires", "0")
             self.end_headers()
             self.wfile.write(content)
 
@@ -96,6 +100,10 @@ class MultiAppHandler(SimpleHTTPRequestHandler):
         self.send_response(200)
         self.send_header("Content-Type", "text/html")
         self.send_header("Content-Length", str(len(content)))
+        # Disable caching for dev server
+        self.send_header("Cache-Control", "no-cache, no-store, must-revalidate")
+        self.send_header("Pragma", "no-cache")
+        self.send_header("Expires", "0")
         self.end_headers()
         self.wfile.write(content)
 

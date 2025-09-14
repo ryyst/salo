@@ -1,5 +1,4 @@
 import requests
-import xml.etree.ElementTree as ET
 from datetime import datetime, timedelta
 from typing import Optional
 from utils.logging import Log
