@@ -54,7 +54,7 @@ class RenderData(BaseModel):
     hours_note: str
     hours_heatmap: dict
     current_day_stamp: str
-    updated_stamp: str
+    updated_timestamp: str
     prev_date_link: str
     next_date_link: str
     is_today: bool

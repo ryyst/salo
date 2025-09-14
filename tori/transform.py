@@ -120,4 +120,9 @@ def transform_events(data: RawData, params: ToriConfig):
     ongoing_events = [e for e in events if e["event_type"] == "ongoing"]
     upcoming_events = [e for e in events if e["event_type"] == "upcoming"]
 
-    return {"ongoing": ongoing_events, "upcoming": upcoming_events}
+    return {
+        "ongoing": ongoing_events,
+        "upcoming": upcoming_events,
+        "page_header": params.page_header,
+        "updated_timestamp": datetime.now().strftime("%d.%m.%Y klo %H:%M")
+    }

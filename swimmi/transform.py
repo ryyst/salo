@@ -20,9 +20,7 @@ from swimmi.utils import (
 locale.setlocale(locale.LC_TIME, "fi_FI.utf8")
 
 
-def _calculate_hours_heatmap(
-    pools: list[dict], render_hours: list[int]
-) -> dict[int, RGB]:
+def _calculate_hours_heatmap(pools: list[dict], render_hours: list[int]) -> dict[int, RGB]:
     """Calculate pool "busyness" for each hour."""
 
     # Initialize empty heatmap with all available hours.
@@ -125,9 +123,7 @@ def _transform_page_data(
         """Filter out uninteresting events made by the swimming hall itself."""
         name = get_event_name(ep).lower()
         return (
-            len(ep.get("eventTextField", []))
-            and "ei varaus" not in name
-            and "suljettu" not in name
+            len(ep.get("eventTextField", [])) and "ei varaus" not in name and "suljettu" not in name
         )
 
     filtered_events = [ep for ep in data.episodes if event_filter(ep)]
@@ -266,7 +262,7 @@ def _transform_page_data(
         hours_heatmap=hours_heatmap,
         epoch=data.epoch,
         current_day_stamp=page_date.strftime("%A %d.%m.").capitalize(),
-        updated_stamp=today.strftime("%d.%m.%Y klo %H:%M"),
+        updated_timestamp=today.strftime("%d.%m.%Y klo %H:%M"),
         # Pre-calculated links for rendering the navigation around current day
         prev_date_link="/" if is_tomorrow else "/" + prev_date.strftime("%Y-%m-%d"),
         next_date_link="/" if is_yesterday else "/" + next_date.strftime("%Y-%m-%d"),

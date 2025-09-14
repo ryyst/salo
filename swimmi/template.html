@@ -1,403 +1,434 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mahtuuko tänään uimaan?</title>
-    <style>
-        html {
-          font-family: Calibri, Arial, sans-serif;
-          font-size: 24px;
+{% extends "base.html" %}
 
-          background-color: #e5e5e5;
-          color: #111;
+{% block title %}Mahtuuko tänään uimaan?{% endblock %}
 
-          box-sizing: border-box;
-        }
-        body {
-          margin: 0;
-        }
+{% block footer_updated %}
+Päivitetty {{ data.updated_timestamp }} - <a href="https://salo.fi/vapaa-aika-ja-matkailu/liikunta/sisaliikuntapaikat/uimahalli/" target="_blank">Aukioloajat</a>
+{% endblock %}
 
+{% block styles %}
+<style>
+  .app-header {
+    background: var(--color-bg-primary);
+    border: none;
+    padding: 0;
+  }
 
-        .content {
-          max-width: 19rem;
-          margin: 0 auto;
-          padding: 0 16px;
-        }
+  .app-title {
+    font-size: var(--font-size-lg);
+    margin: 0.75rem 0;
+  }
 
-        h1 { font-size: 1.5rem; }
-        h2 { font-size: 1.1rem; }
-        h3 { font-size: 0.8rem; }
+  .app-main {
+    padding: 0;
+    min-height: auto;
+  }
 
-        .subtitle {
-          font-size: 0.9rem;
-          margin-bottom: 8px;
-        }
+  html {
+    font-family: var(--font-family-base);
+    font-size: var(--font-size-lg); /* Keep 24px for scaling hax */
+    background-color: var(--color-bg-primary);
+    color: var(--color-text-primary);
+    box-sizing: border-box;
+  }
+  body {
+    margin: 0;
+  }
 
-        .current-time {
-          color: #ff0c00;
-        }
+  .app-footer {
+    padding: 12px 0;
+  }
+  .footer-updated {
+    font-size: 14px;
+  }
 
-        .font-p {
-          font-size: 0.65rem;
-        }
+  .content {
+    max-width: 19rem;
+    margin: 0 auto;
+    padding: 0 16px;
+  }
 
-        .red {
-          color: #dd1111;
-        }
-        .orange {
-          color: #f47f17;
-        }
+  h1 { font-size: 1.5rem; }
+  h2 { font-size: 1.1rem; }
+  h3 { font-size: 0.8rem; }
 
-        .poolname {
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            max-width: 1.35rem;
-        }
+  .subtitle {
+    font-size: 0.9rem;
+    margin-bottom: 8px;
+  }
 
-        .event {
-          margin: 0;
-          padding: 0.3rem 0.2rem;
-        }
+  .current-time {
+    color: #ff0c00;
+  }
 
-        .text-center {
-          margin: 0 auto;
-        }
+  .font-p {
+    font-size: 0.65rem;
+  }
 
-        .text-center {
-          text-align: center;
-        }
+  .red {
+    color: #dd1111;
+  }
+  .orange {
+    color: #f47f17;
+  }
 
-        .fade {
-          mask: linear-gradient(to top, rgb(0, 0, 0) 0, rgb(0, 0, 0) 0%, rgba(0,0,0, 0) 85%, rgba(0,0,0, 0) 0 ) 100% repeat-x;
-        }
-        .recent-past {
-          opacity: 30%;
-        }
+  .poolname {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 1.35rem;
+  }
 
+  .event {
+    margin: 0;
+    padding: 0.3rem 0.2rem;
+  }
 
-        table {
-          border-collapse: collapse;
-        }
+  .text-center {
+    margin: 0 auto;
+  }
 
-        th, td {
-          padding-left: 1px;
-          padding-bottom: 1px;
-          padding-top: 0px;
+  .text-center {
+    text-align: center;
+  }
 
-          min-height: 1rem;
-          width: 1rem;
-          height: 1rem;
-        }
+  .fade {
+    mask: linear-gradient(to top, rgb(0, 0, 0) 0, rgb(0, 0, 0) 0%, rgba(0,0,0, 0) 85%, rgba(0,0,0, 0) 0 ) 100% repeat-x;
+  }
+  .recent-past {
+    opacity: 30%;
+  }
 
-        .pool-H, .pool-K {
-          width: 0.85rem;
-        }
+  table {
+    border-collapse: collapse;
+  }
 
-        .pool-L, .pool-T {
-          padding-bottom: 1px;
+  table * {
+    box-sizing: content-box;
+  }
 
-          width: 1.35rem;
-        }
+  th, td {
+    padding-left: 1px;
+    padding-bottom: 1px;
+    padding-top: 0px;
 
-        /* Cells */
-        th, td {
-          line-height: 0.95rem;
-          font-size: 0.6rem;
-        }
-        th>div, td>div {
-          width: 100%;
-          height: 100%;
+    min-height: 1rem;
+    width: 1rem;
+    height: 1rem;
+  }
 
-          border-radius: 0px;
+  .pool-H, .pool-K {
+    width: 0.85rem;
+  }
 
-          position: relative;
-        }
+  .pool-L, .pool-T {
+    padding-bottom: 1px;
+    width: 1.35rem;
+  }
 
-        /* Table headers */
-        th>div {
-          font-weight: 600;
-          background-color: #dadada;
-        }
-        /* Table cells */
-        td>div {
-          background-color: #ffffff;
-        }
-        .cell-fill {
-          position: absolute;
-          width: 100%;
-          left: 0;
-          box-sizing: border-box;
-        }
+  /* Cells */
+  th, td {
+    line-height: 0.95rem;
+    font-size: 0.6rem;
+  }
+  th>div, td>div {
+    width: 100%;
+    height: 100%;
+    border-radius: 0px;
+    position: relative;
+  }
 
-        :nth-child(1 of .open) {
-          border-top: 1px solid #CCC;
-        }
-        :nth-last-child(1 of .open) {
-          border-bottom: 1px solid #CCC;
-        }
+  /* Table headers - use CSS variable for background */
+  th>div {
+    font-weight: 600;
+    background-color: var(--color-bg-extra);
+    color: var(--color-text-secondary);
+  }
 
-        .closed {
-          opacity: 0.35;
-        }
+  /* Table cells - use CSS variable for background */
+  td>div {
+    background-color: var(--color-bg-secondary);
+  }
+  .cell-fill {
+    position: absolute;
+    width: 100%;
+    left: 0;
+    box-sizing: border-box;
+  }
 
-        .empty {
-          background: none;
-          border: none;
-        }
+  :nth-child(1 of .open) {
+    border-top: 1px solid #CCC;
+  }
+  :nth-last-child(1 of .open) {
+    border-bottom: 1px solid #CCC;
+  }
 
+  .closed {
+    opacity: 0.35;
+  }
 
-        label, a, a:visited, a:active {
-          color: #999;
-          text-decoration: none;
-        }
+  .empty {
+    background: none;
+    border: none;
+  }
 
-        .updated {
-          font-size: 0.75rem;
-          color: #BBB;
-        }
+  label, a, a:visited, a:active {
+    color: #999;
+    text-decoration: none;
+  }
+  .footer-updated a {
+    color: var(--color-link);
+  }
 
-        /* Pool border areas */
-        .pool-H.lane-S {
-          border-right: 2px dashed #BBB;
-          padding-right: 6px;
-        }
-        .pool-K.lane-1, .pool-T {
-          padding-left: 6px;
-        }
-        .pool-K.lane-6 {
-          padding-right: 6px;
-        }
+  .updated {
+    font-size: 0.75rem;
+    color: #BBB;
+  }
 
-        .pool-L {
-          padding-right: 6px;
-          padding-left: 6px;
+  /* Pool border areas */
+  .pool-H.lane-S {
+    border-right: 2px dashed var(--color-text-muted);
+    padding-right: 6px;
+  }
+  .pool-K.lane-1, .pool-T {
+    padding-left: 6px;
+  }
+  .pool-K.lane-6 {
+    padding-right: 6px;
+  }
 
-          border-left: 2px dashed #BBB;
-          border-right: 2px dashed #BBB;
-        }
+  .pool-L {
+    padding-right: 6px;
+    padding-left: 6px;
+    border-left: 2px dashed var(--color-text-muted);
+    border-right: 2px dashed var(--color-text-muted);
+  }
 
-        .prev {
-          float: left;
-        }
-        .next {
-          padding: 0 8px;
-          float: right;
-        }
-        .navigation {
-          background: #dadada;
-          font-size: 0.50rem;
-          line-height: 0.50rem;
-          padding: 8px;
-        }
+  .prev {
+    float: left;
+  }
+  .next {
+    padding: 0 8px;
+    float: right;
+  }
+  .navigation {
+    background: var(--color-bg-extra);
+    border-bottom: 1px solid var(--border-color);
+    font-size: 0.50rem;
+    line-height: 0.50rem;
+    padding: 8px;
+  }
 
-        /* Heatmap indicator hax. */
-        tr::before {
-          content: '';
-          position: absolute;
-        }
+  #reservations {
+    margin-bottom: 1rem;
+  }
 
-        tr.open::before {
-          left: -11px;
-          top: 50%;
-          transform: translateY(-50%);
-          width: 6px;
-          height: 6px;
-          border-radius: 3px;
-          background-color: var(--dot-color);
-          border: 1px solid #111;
-        }
+  /* Heatmap indicator hax. */
+  tr::before {
+    content: '';
+    position: absolute;
+  }
 
-        tr {
-          /* Requried for the above pseudo-element hax. */
-          position: relative;
-        }
+  tr.open::before {
+    left: -11px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 6px;
+    height: 6px;
+    border-radius: 3px;
+    background-color: var(--dot-color);
+    border: 1px solid var(--color-text-primary);
+  }
 
-    </style>
-</head>
-<body>
-    {# This fun little thing generates all of the event positions & sizes in the table. #}
-    {% macro get_reservation(hour, pool, lane) -%}
-      {%- for event in pool.events -%}
-        {%- if hour in event.encompassing_hours and event.lane == lane -%}
-          <div
-            class="cell-fill"
-            style="background-color: rgb{{event.color}}; border: 1px solid rgb{{event.borderColor}};
-              {%- if event.endHour - event.startHour == 1 and event.endMin == 0 -%}
-                top: 0; height: 100%; border-radius: 3px;
-              {%- elif (hour == event.startHour and hour == event.endHour) -%}
-                top: {{ event.startMin / 60 * 100 }}%; height: {{ (event.endMin - event.startMin) / 60 * 100 }}%; border-radius: 3px;
-              {%- elif hour == event.startHour -%}
-                bottom: 0; height: {{ 100 - (event.startMin / 60 * 100) }}%; border-radius: 3px 3px 0 0; border-bottom: 0;
-              {%- elif hour == event.endHour  -%}
-                top: 0; height: {{ event.endMin / 60 * 100 }}%; border-radius: 0 0 3px 3px; border-top: 0;
+  tr {
+    /* Required for the above pseudo-element hax. */
+    position: relative;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+  {# This fun little thing generates all of the event positions & sizes in the table. #}
+  {% macro get_reservation(hour, pool, lane) -%}
+    {%- for event in pool.events -%}
+      {%- if hour in event.encompassing_hours and event.lane == lane -%}
+        <div
+          class="cell-fill"
+          style="background-color: rgb{{event.color}}; border: 1px solid rgb{{event.borderColor}};
+            {%- if event.endHour - event.startHour == 1 and event.endMin == 0 -%}
+              top: 0; height: 100%; border-radius: 3px;
+            {%- elif (hour == event.startHour and hour == event.endHour) -%}
+              top: {{ event.startMin / 60 * 100 }}%; height: {{ (event.endMin - event.startMin) / 60 * 100 }}%; border-radius: 3px;
+            {%- elif hour == event.startHour -%}
+              bottom: 0; height: {{ 100 - (event.startMin / 60 * 100) }}%; border-radius: 3px 3px 0 0; border-bottom: 0;
+            {%- elif hour == event.endHour  -%}
+              top: 0; height: {{ event.endMin / 60 * 100 }}%; border-radius: 0 0 3px 3px; border-top: 0;
+            {%- else -%}
+              top: 0; height: 100%;
+              {%- if event.endHour == hour + 1 and event.endMin == 0 -%}
+                border-radius: 0 0 3px 3px;
               {%- else -%}
-                top: 0; height: 100%;
-                {%- if event.endHour == hour + 1 and event.endMin == 0 -%}
-                  border-radius: 0 0 3px 3px;
-                {%- else -%}
-                  border-top: 0; border-bottom: 0;
-                {%- endif -%}
+                border-top: 0; border-bottom: 0;
               {%- endif -%}
-            "></div>
-        {%- endif -%}
-      {%- endfor -%}
-    {%- endmacro %}
+            {%- endif -%}
+          "></div>
+      {%- endif -%}
+    {%- endfor -%}
+  {%- endmacro %}
 
-    <div class="text-center navigation">
-      <span class="prev"><a href="{{ data.prev_date_link }}">< Edel.</a></span>
-      <span class="today">{% if not data.is_today %}<a href="/">Palaa</a>{% else %}&nbsp;{% endif %}</span>
-      <span class="next"><a href="{{ data.next_date_link }}">Seur. ></a></span>
+  <div class="text-center navigation">
+    <span class="prev"><a href="{{ data.prev_date_link }}">< Edel.</a></span>
+    <span class="today">{% if not data.is_today %}<a href="/">Palaa</a>{% else %}&nbsp;{% endif %}</span>
+    <span class="next"><a href="{{ data.next_date_link }}">Seur. ></a></span>
+  </div>
+
+  <div class="content">
+
+    <div style="padding: 0.75rem 0;">
+      <h1 class="text-center" style="margin: 0">{{ data.page_header }}</h1>
+      <p class="subtitle text-center" style="margin-top: 0">
+        {{ data.current_day_stamp }} <span class="current-time"></span>
+      </p>
+      {% if data.hours_note %}
+        <p class="orange font-p text-center" style="margin-top: 0.25rem;"><em>{{ data.hours_note }}</em></p>
+      {% endif %}
     </div>
 
-    <div class="content">
-
-      <div style="padding: 0.75rem 0;">
-        <h1 class="text-center" style="margin: 0">{{ data.page_header }}</h1>
-        <p class="subtitle text-center" style="margin-top: 0">
-          {{ data.current_day_stamp }} <span class="current-time"></span>
-        </p>
-        {% if data.hours_note %}
-          <p class="orange font-p text-center" style="margin-top: 0.25rem;"><em>{{ data.hours_note }}</em></p>
-        {% endif %}
-      </div>
-
-      {% if not data.is_closed %}
-        {% if data.is_today %}
-          <div class="font-p">
-            <label><input type="checkbox" id="toggleCheckbox" checked="false" style="margin-left: 16px; margin-right: 8px;">Kaikki</label>
-          </div>
-        {% endif %}
-
-        <table class="center text-center">
-          <tr>
-            <th class="empty"></th>
-            {%- for pool in data.pools -%}
-              <th class="poolname" colspan="{{ pool.lanes|length }}">
-                {%- if pool.lanes|length == 1 -%}{{ pool.shortName }}{% else %}{{ pool.name }}{%- endif -%}
-              </th>
-            {%- endfor -%}
-          </tr>
-          <tr>
-            <th class="empty"></th>
-            {% for pool in data.pools -%}
-              {%- for lane in pool.lanes -%}
-                <th class="pool-{{ pool.letter }} lane-{{ lane }}"><div>{{ lane }}</div></th>
-              {%- endfor -%}
-            {%- endfor %}
-          </tr>
-
-          {% for hour in data.hours %}
-            {% set is_open = hour in data.open_hours %}
-            {% set heat_color = data.hours_heatmap[hour] %}
-
-            <tr {% if is_open %}style="--dot-color: rgb{{ heat_color }};"{% endif %} class="hour-{{ hour }} {% if is_open %}open{% else %}closed{% endif %}">
-              <th><div>{{ hour }}</div></th>
-              {% for pool in data.pools %}
-                {%- for lane in pool.lanes -%}
-                  <td class="pool-{{ pool.letter }} lane-{{ lane }}">
-                    <div>{{ get_reservation(hour, pool, lane) }}</div>
-                  </td>
-                {%- endfor -%}
-              {%- endfor %}
-            </tr>
-          {% endfor %}
-        </table>
-      {% else %}
-        <div
-          class="subtitle text-center red"
-          style="font-size: 1rem; padding: 1rem 0;"
-        >
-          <div style="border: 2px dashed #dd1111; border-radius: 8px; padding: 0.5rem 1.5rem; rotate: z -5deg; display: inline-block;">
-            Suljettu
-          </div>
+    {% if not data.is_closed %}
+      {% if data.is_today %}
+        <div class="font-p">
+          <label><input type="checkbox" id="toggleCheckbox" checked="false" style="margin-left: 16px; margin-right: 8px;">Kaikki</label>
         </div>
       {% endif %}
 
-      <div id="reservations" class="font-p">
-        <h2>Varaukset</h2>
-        {% for pool in data.pools -%}
-          <h3>{{ pool.name }}</h3>
-          {% for event in pool.events -%}
-            {% if not event.fake %}
-              <p class="hour-{{ event.endHour }} event" style="border-left: 4px solid rgb{{event.color}}">
-                <strong>{{ event.humanTime }}</strong> {{ event.laneFull }} - {{ event.info }}
-              </p>
-            {%- endif %}
+      <table class="center text-center">
+        <tr>
+          <th class="empty"></th>
+          {%- for pool in data.pools -%}
+            <th class="poolname" colspan="{{ pool.lanes|length }}">
+              {%- if pool.lanes|length == 1 -%}{{ pool.shortName }}{% else %}{{ pool.name }}{%- endif -%}
+            </th>
+          {%- endfor -%}
+        </tr>
+        <tr>
+          <th class="empty"></th>
+          {% for pool in data.pools -%}
+            {%- for lane in pool.lanes -%}
+              <th class="pool-{{ pool.letter }} lane-{{ lane }}"><div>{{ lane }}</div></th>
+            {%- endfor -%}
           {%- endfor %}
-        {%- endfor %}
+        </tr>
+
+        {% for hour in data.hours %}
+          {% set is_open = hour in data.open_hours %}
+          {% set heat_color = data.hours_heatmap[hour] %}
+
+          <tr {% if is_open %}style="--dot-color: rgb{{ heat_color }};"{% endif %} class="hour-{{ hour }} {% if is_open %}open{% else %}closed{% endif %}">
+            <th><div>{{ hour }}</div></th>
+            {% for pool in data.pools %}
+              {%- for lane in pool.lanes -%}
+                <td class="pool-{{ pool.letter }} lane-{{ lane }}">
+                  <div>{{ get_reservation(hour, pool, lane) }}</div>
+                </td>
+              {%- endfor -%}
+            {%- endfor %}
+          </tr>
+        {% endfor %}
+      </table>
+    {% else %}
+      <div
+        class="subtitle text-center red"
+        style="font-size: 1rem; padding: 1rem 0;"
+      >
+        <div style="border: 2px dashed #dd1111; border-radius: 8px; padding: 0.5rem 1.5rem; rotate: z -5deg; display: inline-block;">
+          Suljettu
+        </div>
       </div>
-
-      <p class="updated text-center" style="margin-top: 2rem">
-        Päivitetty
-        {{ data.updated_stamp }}
-        -
-        <a href="https://salo.fi/vapaa-aika-ja-matkailu/liikunta/sisaliikuntapaikat/uimahalli/" target="_blank">Aukioloajat</a>
-      </p>
-
-    </div>
-
-    {% if data.is_today %}
-      <div id="timetracker" style="border-top: 1px solid #ff0000bb; width: 100%; left: 0; position: absolute;" />
-
-      <script>
-        const now = new Date();
-
-        function trackNow() {
-
-          const tracker = document.querySelector(`#timetracker`);
-          const currentRow = document.querySelector(`.hour-${now.getHours()}`);
-          currentRow.append(tracker)
-          tracker.style.top = `${now.getMinutes() / 60 * 100}%`
-        }
-
-        trackNow();
-        window.setInterval(trackNow, 60 * 5 * 1000);
-
-
-        // TODO: this is terrible
-        function hideOldHours(yes) {
-          const recentPast = now.getHours() - 1;
-
-          for (let i = {{ data.hours[0] }}; i < recentPast; i++) {
-            const elems = document.querySelectorAll(`.hour-${i}`) || [];
-            elems.forEach((elem) => {
-              elem.style.display = yes ? "none" : "";
-            });
-          }
-
-          if (yes) {
-            const all = document.querySelectorAll(`.hour-${recentPast}`);
-            all?.forEach((elem, i) => {
-              // Separate classes for the table & bottom listing.
-              elem?.classList?.add(i === 0 ? "fade" : "recent-past");
-            })
-          } else {
-            const tableRows = document.querySelectorAll(`tr`);
-            tableRows?.forEach((elem) => {
-              elem?.classList?.remove("fade");
-              elem?.classList?.remove("recent-past");
-            })
-
-            const listing = document.querySelectorAll(`.hour-${recentPast}`);
-            listing?.forEach((elem) => {
-              elem?.classList?.remove("fade");
-              elem?.classList?.remove("recent-past");
-            })
-          }
-        }
-
-        hideOldHours(true)
-
-        const toggle = document.getElementById("toggleCheckbox")
-        toggle.checked = false
-
-
-        toggle.addEventListener("change", function () {
-          hideOldHours(!this.checked)
-        })
-      </script>
     {% endif %}
-</body>
-</html>
+
+    <div id="reservations" class="font-p">
+      <h2>Varaukset</h2>
+      {% for pool in data.pools -%}
+        <h3>{{ pool.name }}</h3>
+        {% for event in pool.events -%}
+          {% if not event.fake %}
+            <p class="hour-{{ event.endHour }} event" style="border-left: 4px solid rgb{{event.color}}">
+              <strong>{{ event.humanTime }}</strong> {{ event.laneFull }} - {{ event.info }}
+            </p>
+          {%- endif %}
+        {%- endfor %}
+      {%- endfor %}
+    </div>
+  </div>
+
+  {% if data.is_today %}
+    <div id="timetracker" style="border-top: 1px solid #ff0000bb; width: 100%; left: 0; position: absolute;" />
+  {% endif %}
+{% endblock %}
+
+{% block scripts %}
+  {% if data.is_today %}
+    <script>
+      const now = new Date();
+
+      function trackNow() {
+        const tracker = document.querySelector(`#timetracker`);
+        const currentRow = document.querySelector(`.hour-${now.getHours()}`);
+
+        if (currentRow) {
+          // Current hour exists in the table - show and position the tracker
+          tracker.style.display = 'block';
+          currentRow.append(tracker);
+          tracker.style.top = `${now.getMinutes() / 60 * 100}%`;
+        } else {
+          // Current hour is outside pool hours - hide the tracker
+          tracker.style.display = 'none';
+        }
+      }
+
+      trackNow();
+      window.setInterval(trackNow, 60 * 5 * 1000);
+
+      // TODO: this is terrible
+      function hideOldHours(yes) {
+        const recentPast = now.getHours() - 1;
+
+        for (let i = {{ data.hours[0] }}; i < recentPast; i++) {
+          const elems = document.querySelectorAll(`.hour-${i}`) || [];
+          elems.forEach((elem) => {
+            elem.style.display = yes ? "none" : "";
+          });
+        }
+
+        if (yes) {
+          const all = document.querySelectorAll(`.hour-${recentPast}`);
+          all?.forEach((elem, i) => {
+            // Separate classes for the table & bottom listing.
+            elem?.classList?.add(i === 0 ? "fade" : "recent-past");
+          })
+        } else {
+          const tableRows = document.querySelectorAll(`tr`);
+          tableRows?.forEach((elem) => {
+            elem?.classList?.remove("fade");
+            elem?.classList?.remove("recent-past");
+          })
+
+          const listing = document.querySelectorAll(`.hour-${recentPast}`);
+          listing?.forEach((elem) => {
+            elem?.classList?.remove("fade");
+            elem?.classList?.remove("recent-past");
+          })
+        }
+      }
+
+      hideOldHours(true)
+
+      const toggle = document.getElementById("toggleCheckbox")
+      toggle.checked = false
+
+      toggle.addEventListener("change", function () {
+        hideOldHours(!this.checked)
+      })
+    </script>
+  {% endif %}
+{% endblock %}
