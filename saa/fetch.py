@@ -44,7 +44,9 @@ def fetch_weather_forecast(config: SaaConfig) -> Optional[str]:
     }
 
     try:
-        logger.info(f"Fetching weather forecast for {config.place} ({config.future_hours}h)")
+        logger.info(
+            f"Fetching weather forecast for {config.place} ({config.future_hours}h)"
+        )
         response = requests.get(api_base, params=params, timeout=30)
         response.raise_for_status()
 
