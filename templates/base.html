@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="fi" data-theme="auto">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{{ page_title | default('Salo.fyi') }}{% endblock %}</title>
+
+    {% block extra_head %}{% endblock %}
+
+    <style>
+      {% include 'static/css/theme.css' %}
+      {% include 'static/css/components.css' %}
+    </style>
+
+    {% block styles %}{% endblock %}
+  </head>
+  <body>
+    {% from 'macros.html' import theme_toggle %}
+    {{ theme_toggle() }}
+
+    {% block header %}
+    <header class="app-header">
+      <div class="container">
+        {% if self.app_title() %}
+        <h1 class="app-title">{% block app_title %}{% endblock %}</h1>
+        {% endif %}
+        {% block header_extra %}{% endblock %}
+      </div>
+    </header>
+    {% endblock %}
+
+    <main class="app-main">
+      {% block content %}{% endblock %}
+    </main>
+
+    <footer class="app-footer">
+      {% block footer %}
+      <div class="container">
+        <p class="footer-updated">
+            {% block footer_updated %}
+            Päivitetty {{ data.updated_timestamp | default('-') }}
+            {% endblock %}
+        </p>
+        {% block footer_extra %}{% endblock %}
+      </div>
+      {% endblock %}
+    </footer>
+
+    <script>
+      {% include 'static/js/theme-toggle.js' %}
+    </script>
+
+    {% block scripts %}{% endblock %}
+  </body>
+</html>

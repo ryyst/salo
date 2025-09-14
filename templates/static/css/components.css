@@ -1,0 +1,231 @@
+/* Base Layout */
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+/* Header & Footer */
+.app-header {
+  background: var(--color-bg-extra);
+  border-bottom: 1px solid var(--border-color);
+  padding: 1rem 0;
+  position: relative;
+}
+
+.app-title {
+  color: var(--color-text-primary);
+  font-size: var(--font-size-lg);
+  margin: 0;
+  text-align: center;
+  font-weight: 600;
+}
+
+.app-main {
+  flex: 1;
+  padding: 1rem 0;
+}
+
+.app-footer {
+  background: var(--color-bg-tertiary);
+  border-top: 1px solid var(--border-color);
+  padding: 0.75rem 0;
+  margin-top: auto;
+}
+
+.footer-updated {
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+  text-align: center;
+  margin: 0;
+}
+
+/* Typography */
+.text-center { text-align: center; }
+.text-muted { color: var(--color-text-muted); }
+
+/* Cards */
+.card {
+  background: var(--color-bg-secondary);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border: 1px solid var(--border-color);
+  transition: box-shadow 0.2s ease;
+}
+
+.card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.card-title {
+  color: var(--color-text-primary);
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin: 0 0 0.5rem 0;
+}
+
+/* Buttons */
+.btn {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  display: inline-block;
+  text-align: center;
+  min-width: 80px;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+  text-decoration: none;
+}
+
+.btn-primary {
+  background: var(--color-accent-primary);
+  color: white;
+}
+
+.btn-primary:hover {
+  background: var(--color-link-hover);
+  color: white;
+}
+
+.btn-secondary {
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-primary);
+  border: 1px solid var(--border-color);
+}
+
+.btn-secondary:hover {
+  background: var(--color-bg-secondary);
+  border-color: var(--color-accent-primary);
+}
+
+/* Lists */
+.list-unstyled {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+/* Grid System */
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  margin: -0.5rem;
+}
+
+.col {
+  flex: 1;
+  padding: 0.5rem;
+}
+
+.col-auto {
+  flex: 0 0 auto;
+  padding: 0.5rem;
+}
+
+/* Responsive utilities */
+@media (max-width: 768px) {
+  .container {
+    padding: 0 0.75rem;
+  }
+
+  .app-title {
+    font-size: 1.5rem;
+  }
+
+  .row {
+    flex-direction: column;
+  }
+
+  .col {
+    flex: 1 0 100%;
+  }
+}
+
+/* Status indicators */
+.status-open {
+  color: var(--color-accent-success);
+  font-weight: 600;
+}
+
+.status-closed {
+  color: var(--color-accent-danger);
+  font-weight: 600;
+}
+
+.status-warning {
+  color: var(--color-accent-warning);
+  font-weight: 600;
+}
+
+/* Badge component */
+.badge {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.badge-success {
+  background: var(--color-accent-success);
+  color: white;
+}
+
+.badge-danger {
+  background: var(--color-accent-danger);
+  color: white;
+}
+
+.badge-warning {
+  background: var(--color-accent-warning);
+  color: white;
+}
+
+.badge-info {
+  background: var(--color-accent-primary);
+  color: white;
+}
+
+/* Alert component */
+.alert {
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+}
+
+.alert-info {
+  background: rgba(var(--color-accent-primary), 0.1);
+  border-color: var(--color-accent-primary);
+  color: var(--color-accent-primary);
+}
+
+.alert-success {
+  background: rgba(var(--color-accent-success), 0.1);
+  border-color: var(--color-accent-success);
+  color: var(--color-accent-success);
+}
+
+.alert-warning {
+  background: rgba(var(--color-accent-warning), 0.1);
+  border-color: var(--color-accent-warning);
+  color: var(--color-accent-warning);
+}
+
+.alert-danger {
+  background: rgba(var(--color-accent-danger), 0.1);
+  border-color: var(--color-accent-danger);
+  color: var(--color-accent-danger);
+}

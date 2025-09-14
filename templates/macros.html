@@ -1,0 +1,114 @@
+{% macro card(title=none, class="") %}
+<div class="card {{ class }}">
+  {% if title %}
+    <h3 class="card-title">{{ title }}</h3>
+  {% endif %}
+  {{ caller() }}
+</div>
+{% endmacro %}
+
+{% macro button(text, type="button", variant="primary", onclick="", href="") %}
+{% if href %}
+<a href="{{ href }}" class="btn btn-{{ variant }}" {% if onclick %}onclick="{{ onclick }}"{% endif %}>
+  {{ text }}
+</a>
+{% else %}
+<button type="{{ type }}" class="btn btn-{{ variant }}" {% if onclick %}onclick="{{ onclick }}"{% endif %}>
+  {{ text }}
+</button>
+{% endif %}
+{% endmacro %}
+
+{% macro badge(text, variant="info") %}
+<span class="badge badge-{{ variant }}">{{ text }}</span>
+{% endmacro %}
+
+{% macro alert(variant="info", dismissible=false) %}
+<div class="alert alert-{{ variant }}{% if dismissible %} alert-dismissible{% endif %}">
+  {{ caller() }}
+  {% if dismissible %}
+  <button type="button" class="close" onclick="this.parentElement.style.display='none'" aria-label="Sulje">
+    <span>&times;</span>
+  </button>
+  {% endif %}
+</div>
+{% endmacro %}
+
+{% macro status_badge(is_open, open_text="Auki", closed_text="Kiinni") %}
+{% if is_open %}
+<span class="status-open">{{ open_text }}</span>
+{% else %}
+<span class="status-closed">{{ closed_text }}</span>
+{% endif %}
+{% endmacro %}
+
+{% macro link(text, url, external=false, class="") %}
+<a href="{{ url }}" class="{{ class }}" {% if external %}target="_blank" rel="noopener noreferrer"{% endif %}>
+  {{ text }}{% if external %} ↗{% endif %}
+</a>
+{% endmacro %}
+
+{% macro theme_toggle() %}
+<button class="theme-toggle"
+        onclick="window.themeManager?.toggleTheme()"
+        aria-label="Vaihda teemaa"
+        title="Vaihda teemaa"
+        style="display: none;">
+  🌓
+</button>
+<style>
+  .theme-toggle {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 48px;
+    height: 48px;
+    background: var(--color-bg-secondary);
+    border: 2px solid var(--border-color);
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    box-shadow: var(--shadow-sm);
+    transition: all 0.3s ease;
+    z-index: 1000;
+    user-select: none;
+  }
+
+  .theme-toggle:hover {
+    background: var(--color-bg-tertiary);
+    transform: scale(1.1);
+  }
+
+</style>
+{% endmacro %}
+
+{% macro container(class="") %}
+<div class="container {{ class }}">
+  {{ caller() }}
+</div>
+{% endmacro %}
+
+{% macro row(class="") %}
+<div class="row {{ class }}">
+  {{ caller() }}
+</div>
+{% endmacro %}
+
+{% macro col(size="auto", class="") %}
+<div class="col{% if size != 'auto' %}-{{ size }}{% endif %} {{ class }}">
+  {{ caller() }}
+</div>
+{% endmacro %}
+
+{% macro list_item(href="", active=false, class="") %}
+<li class="{% if active %}active{% endif %} {{ class }}">
+  {% if href %}
+    <a href="{{ href }}">{{ caller() }}</a>
+  {% else %}
+    {{ caller() }}
+  {% endif %}
+</li>
+{% endmacro %}

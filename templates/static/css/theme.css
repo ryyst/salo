@@ -1,0 +1,109 @@
+:root[data-theme="light"] {
+  /* Typography */
+  --font-family-base: Calibri, Arial, sans-serif;
+  --font-size-base: 18px;
+  --font-size-lg: 24px;
+  --font-size-sm: 16px;
+  --line-height-base: 1.5;
+
+  /* Colors - Light Theme */
+  --color-bg-primary: #ececec;
+  --color-bg-secondary: #fafafa;
+  --color-bg-tertiary: #e9ecef;
+  --color-bg-extra: #dadada;
+  --color-text-primary: #212529;
+  --color-text-secondary: #6c757d;
+  --color-text-muted: #adb5bd;
+
+  /* Accent Colors */
+  --color-accent-primary: #007bff;
+  --color-accent-success: #28a745;
+  --color-accent-warning: #ffc107;
+  --color-accent-danger: #dc3545;
+
+  /* Interactive */
+  --color-link: #007bff;
+  --color-link-hover: #0056b3;
+
+  /* Borders & Shadows */
+  --border-color: #dee2e6;
+  --shadow-sm: 0 2px 4px rgba(0,0,0,0.1);
+  --shadow-md: 0 4px 8px rgba(0,0,0,0.15);
+
+  /* Border Radius */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+}
+
+:root[data-theme="dark"] {
+  /* Typography (same) */
+  --font-family-base: Calibri, Arial, sans-serif;
+  --font-size-base: 18px;
+  --font-size-lg: 24px;
+  --font-size-sm: 16px;
+  --line-height-base: 1.5;
+
+  /* Colors - Dark Theme */
+  --color-bg-primary: #1a1a1a;
+  --color-bg-secondary: #2d2d2d;
+  --color-bg-tertiary: #404040;
+  --color-bg-extra: #2d2d2d;
+  --color-text-primary: #ffffff;
+  --color-text-secondary: #cccccc;
+  --color-text-muted: #999999;
+
+  /* Accent Colors (adjusted for dark) */
+  --color-accent-primary: #4dabf7;
+  --color-accent-success: #51cf66;
+  --color-accent-warning: #ffd43b;
+  --color-accent-danger: #ff6b6b;
+
+  /* Interactive */
+  --color-link: #4dabf7;
+  --color-link-hover: #74c0fc;
+
+  /* Borders & Shadows */
+  --border-color: #555555;
+  --shadow-sm: 0 2px 4px rgba(0,0,0,0.3);
+  --shadow-md: 0 4px 8px rgba(0,0,0,0.4);
+
+  /* Border Radius (same) */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+}
+
+/* Base element reset and theme application */
+* {
+  box-sizing: border-box;
+}
+
+html {
+  height: 100%;
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-base);
+  background-color: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  display: flex;
+  flex-direction: column;
+}
+
+a {
+  color: var(--color-link);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+a:hover {
+  color: var(--color-link-hover);
+  text-decoration: underline;
+}
