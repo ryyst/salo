@@ -66,6 +66,7 @@
             height: 100dvh; /* Dynamic viewport height for mobile */
             gap: 10px;
             padding: 10px;
+            justify-content: center;
         }
 
         .panel {
@@ -116,7 +117,7 @@
             transform: scale(1.1);
         }
 
-        @media (max-width: 768px) {
+        @media (max-width: 600px) {
             body {
                 overflow: hidden;
                 position: fixed;
@@ -124,14 +125,6 @@
                 left: 0;
                 right: 0;
                 bottom: 0;
-            }
-
-            .container {
-                position: relative;
-                height: 100vh;
-                height: 100dvh; /* Dynamic viewport height for mobile */
-                padding: 0;
-                gap: 0;
             }
 
             .panel {
@@ -144,7 +137,7 @@
                 transform: scale(0.8);
                 transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
                 z-index: 10;
-                border-radius: 20px;
+                border-radius: 0px;
                 min-height: none;
                 max-height: none;
                 pointer-events: none;
