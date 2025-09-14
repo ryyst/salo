@@ -44,7 +44,7 @@
 
 {% macro link(text, url, external=false, class="") %}
 <a href="{{ url }}" class="{{ class }}" {% if external %}target="_blank" rel="noopener noreferrer"{% endif %}>
-  {{ text }}{% if external %} ↗{% endif %}
+  {{ text }}{% if external %} ⤴{% endif %}
 </a>
 {% endmacro %}
 

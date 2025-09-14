@@ -152,11 +152,12 @@ Päivitetty {{ data.updated_timestamp | default('tuntematon aika') }} - <a href=
     flex: 1;
     padding: 0.25rem 0.5rem;
     line-height: 1.3;
-    max-height: calc(1.3em * 3);
+    max-height: calc(1.3em * 2);
     overflow: hidden;
     display: -webkit-box;
-    -webkit-line-clamp: 3;
+    -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
+    text-overflow: ellipsis;
   }
 
   .event-title a {
@@ -296,6 +297,13 @@ Päivitetty {{ data.updated_timestamp | default('tuntematon aika') }} - <a href=
     margin-bottom: 0.5rem;
     gap: 0;
     flex-direction: row;
+  }
+
+  .event.ongoing a {
+    text-overflow: ellipsis;
+    overflow: hidden;
+    max-width: 100%;
+    display: inline-block;
   }
 
   .event.ongoing .event-image {

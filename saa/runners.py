@@ -43,7 +43,7 @@ def run_saa(config: SaaConfig):
             dt = datetime.fromisoformat(point["raw_time"].replace("Z", "+00:00"))
             date_key = dt.strftime("%Y-%m-%d")
             day_name = dt.strftime("%A")  # Full day name
-            date_display = dt.strftime("%d.%m")
+            date_display = dt.strftime("%d.%m.")
 
             point["date_key"] = date_key
             point["day_name"] = day_name
@@ -111,4 +111,6 @@ def run_saa(config: SaaConfig):
     save_file(output_path, html_content)
 
     Log.info(f"Weather forecast generated successfully at {output_path}")
-    Log.info(f"Forecast covers {len(forecast_data)} time points over {config.future_hours} hours")
+    Log.info(
+        f"Forecast covers {len(forecast_data)} time points over {config.future_hours} hours"
+    )
