@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% from 'macros.html' import card %}
+
+{% block title %}Aukioloajat - Salo{% endblock %}
+
+{% block app_title %}Aukioloajat{% endblock %}
+
+{% block footer_updated %}
+Päivitetty {{ data.updated_timestamp | default('tuntematon aika') }} - <a href="https://libraries.fi/web/salon-kaupunginkirjasto" target="_blank">Salon kirjasto</a>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  {% for place in data.places %}
+    {% call card(title=place.place_name) %}
+      <div class="place-data">{{ place.place_data | safe }}</div>
+    {% endcall %}
+  {% endfor %}
+</div>
+{% endblock %}
+
+{% block styles %}
+<style>
+  .place-data {
+    color: var(--color-text-secondary);
+    line-height: 1.5;
+    font-size: var(--font-size-base);
+  }
+  
+  .place-data p {
+    margin: 0.5rem 0;
+  }
+  
+  .place-data strong {
+    color: var(--color-text-primary);
+    font-weight: 600;
+  }
+
+  /* Responsive adjustments for mobile */
+  @media (max-width: 768px) {
+    .container {
+      padding: 0 0.5rem;
+    }
+    
+    .card {
+      margin-bottom: 0.75rem;
+      padding: 0.75rem;
+    }
+  }
+</style>
+{% endblock %}
