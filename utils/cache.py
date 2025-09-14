@@ -19,18 +19,35 @@ def cache_output(namespace: str, DataModel: Any):
 
     def decorator(function):
         def wrapper(*args, **kwargs):
-            today = date.today().strftime("%Y-%m-%d")
-            cache_file = f"_cache/{today}_{namespace}.json"
+            # Import here to avoid circular imports
+            from config import get_cache_dir, should_ignore_cache
 
-            cached_data = _read_json_from_file(cache_file)
-            if cached_data:
-                Log.info("Cached data found! Proceeding offline.")
-                return DataModel(**cached_data)
+            today = date.today().strftime("%Y-%m-%d")
+            cache_dir = get_cache_dir()
+            cache_file = f"{cache_dir}/{today}_{namespace}.json"
+
+            # Check if cache should be ignored
+            if should_ignore_cache():
+                Log.info("Ignoring cache, forcing redownload...")
+            else:
+                cached_data = _read_json_from_file(cache_file)
+                if cached_data:
+                    Log.info("Cached data found! Proceeding offline.")
+                    if DataModel == str:
+                        return cached_data
+                    else:
+                        return DataModel(**cached_data)
 
             Log.info("Missing cache, redownloading...")
             fresh_data = function(*args, **kwargs)
 
-            save_file(cache_file, fresh_data.model_dump_json(indent=2))
+            # Handle both Pydantic models and plain strings/data
+            if hasattr(fresh_data, "model_dump_json"):
+                cache_content = fresh_data.model_dump_json(indent=2, by_alias=True)
+            else:
+                cache_content = json.dumps(fresh_data, indent=2)
+
+            save_file(cache_file, cache_content)
 
             # Return new data and continue with the pipeline as usual
             return fresh_data

@@ -1,10 +1,11 @@
+import os
 from pathlib import Path
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 from utils.logging import Log
 
-jinja = Environment(loader=FileSystemLoader("."), autoescape=select_autoescape())
+jinja = Environment(loader=FileSystemLoader([".", "templates"]), autoescape=select_autoescape())
 
 
 #
@@ -17,7 +18,7 @@ def render_html(data, template_path: str):
     return template.render(data=data)
 
 
-def render_stdout(data):
+def render_stdout(data, params=None):
     return __import__("pprint").pprint(data)
 
 
@@ -29,3 +30,8 @@ def save_file(output_file: str, data: str):
         file.write(data)
 
     Log.info("Rendered file saved to %s", output_file)
+
+    # Print clickable file URL for HTML files
+    if output_file.endswith(".html"):
+        abs_path = os.path.abspath(output_file)
+        Log.info(f"Link: file://{abs_path}")
