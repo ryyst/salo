@@ -20,6 +20,7 @@ import tori.runners  # noqa
 import leffa.runners  # noqa
 import koje.runners  # noqa
 import saa.runners  # noqa
+import uutta.runners  # noqa
 
 
 def create_parser():
