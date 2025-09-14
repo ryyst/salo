@@ -9,6 +9,7 @@ jinja2 = "*"
 pydantic = "*"
 beautifulsoup4 = "*"
 watchdog = "*"
+skyfield = "*"
 
 [dev-packages]
 

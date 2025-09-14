@@ -1,8 +1,8 @@
-import requests
 from datetime import datetime, timedelta
-from typing import Optional
+from typing import Optional, Dict, Any
 from utils.logging import Log
 from .config import SaaConfig
+from .api import FMIWeatherAPI, SolarCalculator
 
 logger = Log
 
@@ -22,43 +22,14 @@ def fetch_weather_forecast(config: SaaConfig) -> Optional[str]:
     Fetch weather forecast from FMI API.
     Returns raw XML string or None if failed.
     """
-    api_base = "https://opendata.fmi.fi/wfs"
-    query_forecast = "fmi::forecast::harmonie::surface::point::timevaluepair"
+    api = FMIWeatherAPI()
+    return api.fetch_forecast(config)
 
-    now = datetime.now()
-    future_time = now + timedelta(hours=config.future_hours)
-    timestep = get_optimal_timestep(config.future_hours)
 
-    # Format datetime for FMI API (needs Z suffix and no microseconds)
-    start_time = now.strftime("%Y-%m-%dT%H:%M:%SZ")
-    end_time = future_time.strftime("%Y-%m-%dT%H:%M:%SZ")
-
-    params = {
-        "request": "getFeature",
-        "storedquery_id": query_forecast,
-        "parameters": "temperature,Precipitation1h,PoP,WindSpeedMS,WindDirection",
-        "place": config.place,
-        "timestep": str(timestep),
-        "starttime": start_time,
-        "endtime": end_time,
-    }
-
-    try:
-        logger.info(
-            f"Fetching weather forecast for {config.place} ({config.future_hours}h)"
-        )
-        response = requests.get(api_base, params=params, timeout=30)
-        response.raise_for_status()
-
-        if not response.text or response.text.strip() == "":
-            logger.error("Empty response from FMI API")
-            return None
-
-        return response.text
-
-    except requests.exceptions.RequestException as e:
-        logger.error(f"Failed to fetch weather data: {e}")
-        return None
-    except Exception as e:
-        logger.error(f"Unexpected error fetching weather data: {e}")
-        return None
+def fetch_sunrise_sunset(place: str, date: datetime) -> Optional[Dict[str, Any]]:
+    """
+    Calculate sunrise/sunset times for a given place and date using local algorithm.
+    Returns dict with sunrise/sunset times or None if failed.
+    """
+    calculator = SolarCalculator()
+    return calculator.sunrise_sunset(place, date)
