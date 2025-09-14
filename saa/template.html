@@ -1,0 +1,240 @@
+{% extends "base.html" %}
+{% from 'macros.html' import card %}
+
+{% block title %}Säätiedot - {{ data.title }}{% endblock %}
+
+{% block app_title %}Säätiedot{% endblock %}
+
+{% block footer_updated %}
+Päivitetty {{ data.updated_timestamp }} - <a href="https://www.ilmatieteenlaitos.fi/" target="_blank">Ilmatieteenlaitos</a>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  {% call card(title="Sääennuste seuraavalle " + (data.forecast_data|length|string) + " tunnille") %}
+    <div class="weather-table-container">
+      <table class="weather-table">
+        <thead>
+          <tr>
+            <th>Aika</th>
+            <th>Lämpötila</th>
+            <th>Sade</th>
+            <th>Tuuli</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for point in data.forecast_data %}
+          <tr class="weather-row">
+            <td class="time-cell">{{ point.time }}</td>
+            <td class="temperature-cell">
+              <span class="temp-value {% if point.temperature is not none %}
+                        {% if point.temperature <= -10 %}temp-freezing
+                        {% elif point.temperature <= 0 %}temp-cold
+                        {% elif point.temperature <= 15 %}temp-cool
+                        {% elif point.temperature <= 25 %}temp-warm
+                        {% else %}temp-hot{% endif %}
+                      {% endif %}">
+                {% if point.temperature is not none %}{{ "%.1f"|format(point.temperature) }}°C{% else %}N/A{% endif %}
+              </span>
+            </td>
+            <td class="precipitation-cell">
+              <div class="rain-info">
+                <span class="rain-amount {% if point.precipitation == 0 %}rain-none
+                          {% elif point.precipitation <= 0.5 %}rain-light
+                          {% elif point.precipitation <= 2.0 %}rain-moderate
+                          {% else %}rain-heavy{% endif %}">
+                  {% if point.precipitation is not none %}{{ "%.1f"|format(point.precipitation) }}mm{% else %}0mm{% endif %}
+                </span>
+                {% if point.precipitation_probability is not none %}
+                <span class="rain-probability">({{ "%.0f"|format(point.precipitation_probability) }}%)</span>
+                {% endif %}
+              </div>
+            </td>
+            <td class="wind-cell">
+              <div class="wind-info">
+                {% if point.wind_speed is not none %}
+                <span class="wind-speed">{{ "%.1f"|format(point.wind_speed) }}m/s</span>
+                {% endif %}
+                {% if point.wind_direction is not none %}
+                <span class="wind-arrow" style="transform: rotate({{ point.wind_direction }}deg);">↑</span>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% endcall %}
+</div>
+{% endblock %}
+
+{% block styles %}
+<style>
+  /* Weather-specific styling using the design system */
+  .weather-table-container {
+    overflow-x: auto;
+    margin: 0 -1rem;
+  }
+
+  .weather-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--font-size-sm);
+    margin: 0;
+  }
+
+  .weather-table th {
+    background: var(--color-bg-tertiary);
+    color: var(--color-text-secondary);
+    font-weight: 600;
+    padding: 0.75rem 0.5rem;
+    text-align: center;
+    border-bottom: 2px solid var(--border-color);
+    font-size: 0.875rem;
+    letter-spacing: 0.025em;
+    position: sticky;
+    top: 0;
+  }
+
+  .weather-table td {
+    padding: 0.75rem 0.5rem;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--color-text-secondary);
+    text-align: center;
+    vertical-align: middle;
+  }
+
+  .weather-row:hover td {
+    background: var(--color-bg-tertiary);
+  }
+
+  /* Temperature styling */
+  .temp-value {
+    font-weight: 600;
+  }
+
+  .temp-cold {
+    color: var(--color-accent-primary);
+  }
+
+  .temp-freezing {
+    color: var(--color-accent-danger);
+  }
+
+  .temp-cool {
+    color: var(--color-accent-success);
+  }
+
+  .temp-warm {
+    color: var(--color-accent-warning);
+  }
+
+  .temp-hot {
+    color: var(--color-accent-danger);
+  }
+
+  /* Precipitation styling */
+  .rain-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+    align-items: center;
+  }
+
+  .rain-amount {
+    font-weight: 500;
+  }
+
+  .rain-none {
+    color: var(--color-text-muted);
+  }
+
+  .rain-light {
+    color: var(--color-accent-primary);
+  }
+
+  .rain-moderate {
+    color: var(--color-accent-primary);
+    font-weight: 600;
+  }
+
+  .rain-heavy {
+    color: var(--color-accent-danger);
+    font-weight: 600;
+  }
+
+  .rain-probability {
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+  }
+
+  /* Wind styling */
+  .wind-info {
+    display: flex;
+    flex-direction: row;
+    gap: 0.25rem;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .wind-speed {
+    display: flex;
+    font-weight: 500;
+  }
+
+  .wind-arrow {
+    display: flex;
+    font-size: 1.25rem;
+    color: var(--color-text-secondary);
+  }
+
+  /* Station info */
+  .station-info {
+    margin-top: 1rem;
+    text-align: center;
+  }
+
+  .station-info p {
+    margin: 0;
+    font-size: 0.875rem;
+  }
+
+  .station-info strong {
+    color: var(--color-text-primary);
+  }
+
+  /* Time cell styling */
+  .time-cell {
+    font-weight: 500;
+    color: var(--color-text-primary);
+    white-space: nowrap;
+  }
+
+  /* Mobile responsive adjustments */
+  @media (max-width: 768px) {
+    .weather-table {
+      font-size: 0.75rem;
+    }
+
+    .weather-table th,
+    .weather-table td {
+      padding: 0.5rem 0.25rem;
+    }
+
+    .wind-info,
+    .rain-info {
+      gap: 0.5rem;
+    }
+
+    .rain-probability,
+    .wind-direction {
+      font-size: 0.625rem;
+    }
+
+    .time-cell {
+      font-size: 0.6875rem;
+    }
+  }
+</style>
+{% endblock %}
