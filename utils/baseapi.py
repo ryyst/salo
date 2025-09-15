@@ -18,7 +18,12 @@ class BaseAPI:
 
     def __init__(self, base_url: str, headers: Union[dict, None] = None):
         self._session = requests.Session()
-        self._session.headers.update({"Content-Type": "application/json"})
+        self._session.headers.update(
+            {
+                "Content-Type": "application/json",
+                "User-Agent": "PublicServant/0.95-beta [rate=friendly; purpose=municipality data aggregator]",
+            }
+        )
 
         if headers:
             self._session.headers.update(headers)
