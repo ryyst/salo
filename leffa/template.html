@@ -17,50 +17,62 @@ Päivitetty {{ data.updated_timestamp | default('tuntematon aika') }} - <a href=
 <div class="container">
   {% if data.movies %}
     {% for movie in data.movies %}
-    <div class="movie card" data-genre="{{ movie.genre | lower }}">
-      <div class="movie-header">
-        {% if movie.poster_url %}
-          <img src="https://biosalo.fi/wp-content/plugins/nexxo-scope/banners/{{ movie.poster_url }}" 
-               alt="{{ movie.title }}" class="movie-poster" loading="lazy">
-        {% else %}
-          <div class="movie-poster-placeholder">🎬</div>
-        {% endif %}
-        
-        <div class="movie-info">
-          <div class="movie-title">
-            <a href="https://biosalo.fi/elokuva/?movie={{ movie.id }}" target="_blank">{{ movie.title }}</a>
-          </div>
-          
-          <div class="movie-meta">
-            {% if movie.genre %}<span>{{ movie.genre }}</span>{% endif %}
-            {% if movie.duration %}<span>{{ movie.duration }}</span>{% endif %}
-            {% if movie.age_limit %}<span>{{ movie.age_limit }}</span>{% endif %}
-            {% if movie.release_year %}<span>{{ movie.release_year }}</span>{% endif %}
-            {% if movie.director %}<span>Ohj: {{ movie.director }}</span>{% endif %}
-          </div>
-
-          {% if movie.intro %}
-          <div class="movie-intro">{{ movie.intro }}</div>
-          {% endif %}
-        </div>
-      </div>
-
-      <div class="shows">
-        <div class="shows-title">Näytösajat ({{ movie.shows | length }} näytöstä)</div>
-        <div class="show-list">
-          {% for show in movie.shows %}
-          <div class="show">
-            <div class="show-time">{{ show.klo }}</div>
-            <div class="show-room">{{ show.room_title }}</div>
-            <div class="show-price">{{ show.price }}€</div>
-            {% if show.note %}
-            <div class="show-note">{{ show.note }}</div>
+      <div class="movie-card" data-movie-id="{{ loop.index }}">
+        <div class="movie-header" onclick="toggleShows(event, {{ loop.index }})">
+          <div class="movie-main">
+            {% if movie.poster_url %}
+              <img src="https://biosalo.fi/wp-content/plugins/nexxo-scope/banners/{{ movie.poster_url }}"
+                   alt="{{ movie.title }}" class="movie-poster" loading="lazy">
+            {% else %}
+              <div class="movie-poster-placeholder">🎬</div>
             {% endif %}
+            <div class="movie-content-wrapper">
+              <h3 class="movie-title">
+                <a href="https://biosalo.fi/elokuva/?movie={{ movie.id }}" target="_blank">{{ movie.title }}</a>
+              </h3>
+              <div class="movie-meta">
+                {% if movie.genre %}<span class="genre-badge" data-genre="{{ movie.genre | lower }}">{{ movie.genre }}</span>{% endif %}
+                {% if movie.duration %}<span class="meta-badge">{{ movie.duration }}</span>{% endif %}
+                {% if movie.director %}<span class="meta-badge">{{ movie.director }}</span>{% endif %}
+              </div>
+              {% if movie.intro %}
+              <div class="movie-intro">{{ movie.intro }}</div>
+              {% endif %}
+              {% if movie.premiere_formatted %}
+              <div class="movie-premiere{% if movie.premiere_upcoming %} premiere-future{% else %} premiere-past{% endif %}">Ensi-ilta: {{ movie.premiere_formatted }}{% if movie.premiere_relative %} {{ movie.premiere_relative }}{% endif %}</div>
+              {% endif %}
+            </div>
+            <span class="shows-arrow" id="arrow-{{ loop.index }}">▼</span>
           </div>
-          {% endfor %}
+        </div>
+        <div class="shows-content" id="shows-{{ loop.index }}" style="display: none;">
+          <div class="table-container">
+            <table class="shows-table">
+              <thead>
+                <tr>
+                  <th>Päivä</th>
+                  <th>Aika</th>
+                  <th>Sali</th>
+                  <th>€</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for show in movie.shows %}
+                <tr class="show-row">
+                  <td class="show-day">{{ show.paiva }}</td>
+                  <td class="show-time">{{ show.aika }}</td>
+                  <td class="show-room">
+                    {{ show.room_title }}
+                    {% if show.note %}<span class="show-note">{{ show.note }}</span>{% endif %}
+                  </td>
+                  <td class="show-price">{{ show.price }}€</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
-    </div>
     {% endfor %}
   {% else %}
     <div class="no-movies">
@@ -79,34 +91,44 @@ Päivitetty {{ data.updated_timestamp | default('tuntematon aika') }} - <a href=
     margin-top: 0.5rem;
   }
 
-  /* Movie styling */
-  .movie {
-    overflow: hidden;
+  .movie-card {
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    margin-bottom: 0.75rem;
+    box-shadow: var(--shadow-sm);
+    transition: all 0.3s ease;
+  }
+
+  .movie-card:hover {
+    box-shadow: var(--shadow-md);
   }
 
   .movie-header {
+    padding: 1rem;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .movie-main {
     display: flex;
-    align-items: center;
-    padding: 0.75rem;
-    gap: 0.75rem;
-    background: linear-gradient(135deg, var(--color-bg-primary), var(--color-bg-tertiary));
-    border-bottom: 1px solid var(--border-color);
-    margin: -1rem -1rem 0 -1rem;
+    align-items: flex-start;
+    gap: 1rem;
+    width: 100%;
   }
 
   .movie-poster {
-    width: 60px;
-    height: 80px;
+    width: auto;
+    height: 110px;
     object-fit: cover;
     border-radius: var(--radius-sm);
     flex-shrink: 0;
-    background: var(--color-bg-tertiary);
   }
 
   .movie-poster-placeholder {
     width: 60px;
     height: 80px;
-    background: linear-gradient(135deg, var(--color-bg-tertiary), var(--color-text-muted));
+    background: var(--color-bg-tertiary);
     border-radius: var(--radius-sm);
     flex-shrink: 0;
     display: flex;
@@ -116,57 +138,105 @@ Päivitetty {{ data.updated_timestamp | default('tuntematon aika') }} - <a href=
     color: var(--color-text-secondary);
   }
 
-  .movie-info {
+  .movie-content-wrapper {
     flex: 1;
+    min-width: 0;
   }
 
   .movie-title {
-    font-size: 1.1rem;
-    font-weight: bold;
-    margin-bottom: 0.25rem;
-    color: var(--color-text-primary);
+    margin: 0;
+    font-size: 0.9rem;
+    font-weight: 600;
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .movie-title a {
-    color: var(--color-text-primary);
+    color: var(--color-accent-primary);
     text-decoration: none;
   }
 
   .movie-title a:hover {
-    color: var(--color-link);
+    color: var(--color-link-hover);
     text-decoration: underline;
   }
 
   .movie-meta {
     display: flex;
     flex-wrap: wrap;
+    align-items: center;
     gap: 0.5rem;
-    font-size: 0.8rem;
+    margin-top: 0.3rem;
+    font-size: 0.75rem;
     color: var(--color-text-secondary);
-    margin-bottom: 0.25rem;
   }
 
-  .movie-meta span {
+  .genre-badge {
+    background: var(--color-bg-tertiary);
+    padding: 0.2rem 0.5rem;
+    border-radius: var(--radius-sm);
+    font-weight: 500;
+    font-size: 0.75rem;
+  }
+
+  .meta-badge {
     background: var(--color-bg-tertiary);
     color: var(--color-text-secondary);
-    padding: 0.1rem 0.4rem;
-    border-radius: 12px;
-    font-size: 0.7rem;
+    padding: 0.2rem 0.5rem;
+    border-radius: var(--radius-sm);
+    font-weight: 500;
+    font-size: 0.75rem;
   }
 
   .movie-intro {
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     color: var(--color-text-secondary);
     line-height: 1.3;
-    max-height: calc(1.3em * 2);
-    overflow: hidden;
+    margin-top: 0.3rem;
     display: -webkit-box;
-    -webkit-line-clamp: 2;
+    -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
+    overflow: hidden;
   }
 
-  .shows {
-    padding: 0.5rem 0rem 0rem;
+  .movie-premiere {
+    font-size: 0.75rem;
+    color: var(--color-accent-primary);
+    font-weight: 500;
+    margin-top: 0.4rem;
+    font-style: italic;
+  }
+
+  .movie-premiere.premiere-past {
+    color: var(--color-text-muted);
+  }
+
+  .movie-premiere.premiere-future {
+    color: var(--color-accent-success);
+  }
+
+  .shows-arrow {
+    font-size: 18px;
+    transition: transform 0.3s ease;
+    cursor: pointer;
+    padding: 0.5rem;
+    margin-left: auto;
+    flex-shrink: 0;
+    color: var(--color-text-secondary);
+  }
+
+  .shows-arrow.expanded {
+    transform: rotate(180deg);
+  }
+
+  .shows-content {
+    border-top: 1px solid var(--border-color);
+    padding: 1rem;
+    background: var(--color-bg-primary);
   }
 
   .shows-title {
@@ -176,26 +246,70 @@ Päivitetty {{ data.updated_timestamp | default('tuntematon aika') }} - <a href=
     margin-bottom: 0.5rem;
   }
 
-  .show-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
+  .table-container {
+    overflow-x: auto;
   }
 
-  .show {
-    background: var(--color-bg-primary);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-sm);
-    padding: 0.4rem 0.6rem;
+  .shows-table {
+    width: 100%;
+    border-collapse: collapse;
     font-size: 0.8rem;
-    transition: all 0.2s ease;
-    cursor: pointer;
+    background: var(--color-bg-secondary);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
   }
 
-  .show:hover {
+  .shows-table th {
     background: var(--color-bg-tertiary);
-    transform: translateY(-1px);
-    box-shadow: var(--shadow-sm);
+    color: var(--color-text-primary);
+    font-weight: 600;
+    padding: 0.6rem 0.8rem;
+    text-align: left;
+    font-size: 0.75rem;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .shows-table th:first-child {
+    width: 25%;
+  }
+
+  .shows-table th:nth-child(2) {
+    width: 25%;
+  }
+
+  .shows-table th:nth-child(3) {
+    width: 35%;
+  }
+
+  .shows-table th:last-child {
+    width: 15%;
+    text-align: right;
+  }
+
+  .show-row {
+    transition: background 0.2s ease;
+  }
+
+  .show-row:hover {
+    background: var(--color-bg-tertiary);
+  }
+
+  .show-row:nth-child(even) {
+    background: rgba(0, 0, 0, 0.02);
+  }
+
+  [data-theme="dark"] .show-row:nth-child(even) {
+    background: rgba(255, 255, 255, 0.02);
+  }
+
+  .shows-table td {
+    padding: 0.6rem 0.8rem;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .show-day {
+    color: var(--color-text-secondary);
+    font-weight: 500;
   }
 
   .show-time {
@@ -205,19 +319,20 @@ Päivitetty {{ data.updated_timestamp | default('tuntematon aika') }} - <a href=
 
   .show-room {
     color: var(--color-text-secondary);
-    font-size: 0.7rem;
   }
 
   .show-price {
     color: var(--color-accent-success);
-    font-weight: 500;
-    font-size: 0.7rem;
+    font-weight: 600;
+    text-align: right;
   }
 
   .show-note {
     color: var(--color-accent-danger);
-    font-size: 0.6rem;
+    font-size: 0.65rem;
     font-style: italic;
+    display: block;
+    margin-top: 0.2rem;
   }
 
   .no-movies {
@@ -227,79 +342,135 @@ Päivitetty {{ data.updated_timestamp | default('tuntematon aika') }} - <a href=
     font-style: italic;
   }
 
-  /* Genre color coding - using CSS variables where possible */
-  .movie[data-genre*="kauhu"] .movie-header {
-    background: linear-gradient(135deg, #f8d7da, #f5c6cb);
+  /* Genre color coding for badges only */
+  .genre-badge[data-genre*="kauhu"] {
+    background: #f8d7da;
+    color: #721c24;
   }
 
-  .movie[data-genre*="komedia"] .movie-header {
-    background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+  .genre-badge[data-genre*="komedia"] {
+    background: #fff3cd;
+    color: #856404;
   }
 
-  .movie[data-genre*="draama"] .movie-header {
-    background: linear-gradient(135deg, #d4edda, #c3e6cb);
+  .genre-badge[data-genre*="draama"] {
+    background: #d4edda;
+    color: #155724;
   }
 
-  .movie[data-genre*="animaatio"] .movie-header,
-  .movie[data-genre*="koko perheen"] .movie-header {
-    background: linear-gradient(135deg, #cce5ff, #b3d9ff);
+  .genre-badge[data-genre*="animaatio"],
+  .genre-badge[data-genre*="koko perheen"] {
+    background: #cce5ff;
+    color: #004085;
   }
 
-  .movie[data-genre*="toiminta"] .movie-header {
-    background: linear-gradient(135deg, #ffe0b3, #ffcc80);
+  .genre-badge[data-genre*="jännitys"],
+  .genre-badge[data-genre*="toiminta"] {
+    background: #ffe0b3;
+    color: #8a6914;
   }
 
-  /* Dark mode adjustments for genre colors */
-  [data-theme="dark"] .movie[data-genre*="kauhu"] .movie-header {
-    background: linear-gradient(135deg, #4a2c2a, #6a2e2a);
+  /* Dark mode adjustments for genre badges */
+  [data-theme="dark"] .genre-badge[data-genre*="kauhu"] {
+    background: #6a2e2a;
+    color: #f8d7da;
   }
 
-  [data-theme="dark"] .movie[data-genre*="komedia"] .movie-header {
-    background: linear-gradient(135deg, #4a4a2a, #5a5a2a);
+  [data-theme="dark"] .genre-badge[data-genre*="komedia"] {
+    background: #5a5a2a;
+    color: #fff3cd;
   }
 
-  [data-theme="dark"] .movie[data-genre*="draama"] .movie-header {
-    background: linear-gradient(135deg, #2a4a2a, #2a5a2a);
+  [data-theme="dark"] .genre-badge[data-genre*="draama"] {
+    background: #2a5a2a;
+    color: #d4edda;
   }
 
-  [data-theme="dark"] .movie[data-genre*="animaatio"] .movie-header,
-  [data-theme="dark"] .movie[data-genre*="koko perheen"] .movie-header {
-    background: linear-gradient(135deg, #2a2a4a, #2a2a5a);
+  [data-theme="dark"] .genre-badge[data-genre*="animaatio"],
+  [data-theme="dark"] .genre-badge[data-genre*="koko perheen"] {
+    background: #2a2a5a;
+    color: #cce5ff;
   }
 
-  [data-theme="dark"] .movie[data-genre*="toiminta"] .movie-header {
-    background: linear-gradient(135deg, #4a4a2a, #5a4a2a);
+  [data-theme="dark"] .genre-badge[data-genre*="jännitys"],
+  [data-theme="dark"] .genre-badge[data-genre*="toiminta"] {
+    background: #5a4a2a;
+    color: #ffe0b3;
   }
 
   /* Mobile responsive adjustments */
   @media (max-width: 768px) {
+    .container {
+      padding: 0 0.5rem;
+    }
+
+    .movie-card {
+      margin-bottom: 0.5rem;
+    }
+
     .movie-header {
-      flex-direction: column;
-      text-align: center;
-      gap: 0.5rem;
+      padding: 0.75rem;
     }
-    
-    .movie-poster,
-    .movie-poster-placeholder {
-      width: 80px;
-      height: 100px;
+
+    .movie-main {
+      gap: 0.75rem;
     }
-    
-    .show-list {
-      justify-content: center;
+
+    .movie-meta {
+      align-self: flex-start;
+    }
+
+    .shows-content {
+      padding: 0.75rem;
+      padding-top: 0;
+    }
+
+    .shows-table {
+      font-size: 0.75rem;
+    }
+
+    .shows-table th,
+    .shows-table td {
+      padding: 0.5rem 0.6rem;
+    }
+
+    .shows-table th:first-child,
+    .shows-table th:nth-child(2) {
+    }
+
+    .shows-table th:nth-child(3) {
+    }
+
+    .shows-table th:last-child {
+    }
+
+    .show-note {
+      font-size: 0.6rem;
+      margin-top: 0.15rem;
     }
   }
 </style>
 {% endblock %}
 
-{% block scripts %}
+{% block extra_head %}
 <script>
-  // Add click handler for show times (future enhancement for direct booking)
-  document.querySelectorAll('.show').forEach(show => {
-    show.addEventListener('click', function() {
-      // Could link to booking page in the future
-      console.log('Show clicked:', this);
-    });
-  });
+function toggleShows(event, movieId) {
+  // Don't toggle if the click was on a link
+  if (event.target.tagName === 'A' || event.target.closest('a')) {
+    return;
+  }
+
+  const content = document.getElementById('shows-' + movieId);
+  const arrow = document.getElementById('arrow-' + movieId);
+
+  if (content.style.display === 'none' || content.style.display === '') {
+    content.style.display = 'block';
+    arrow.classList.add('expanded');
+  } else {
+    content.style.display = 'none';
+    arrow.classList.remove('expanded');
+  }
+}
+
 </script>
 {% endblock %}

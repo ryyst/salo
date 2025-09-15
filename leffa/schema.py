@@ -1,4 +1,4 @@
-from typing import List, Dict, Optional
+from typing import List, Optional
 from pydantic import BaseModel
 
 
@@ -7,6 +7,8 @@ class MovieShow(BaseModel):
     title: str
     start_time: str
     klo: str
+    paiva: str
+    aika: str
     room_title: str
     duration: str
     age_limit: str
@@ -30,6 +32,11 @@ class Movie(BaseModel):
     duration: Optional[str] = None
     age_limit: Optional[str] = None
     release_year: Optional[str] = None
+    date_created: Optional[str] = None
+    premiere_date: Optional[str] = None
+    premiere_formatted: Optional[str] = None
+    premiere_relative: Optional[str] = None
+    premiere_upcoming: Optional[bool] = None
 
 
 class LeffaData(BaseModel):
