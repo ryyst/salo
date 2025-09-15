@@ -6,7 +6,7 @@
 {% block app_title %}Aukioloajat{% endblock %}
 
 {% block footer_updated %}
-Päivitetty {{ data.updated_timestamp | default('tuntematon aika') }} - <a href="https://libraries.fi/web/salon-kaupunginkirjasto" target="_blank">Salon kirjasto</a>
+Päivitetty {{ data.updated_timestamp | default('-') }} - <a href="https://libraries.fi/web/salon-kaupunginkirjasto" target="_blank">Salon kirjasto</a>
 {% endblock %}
 
 {% block content %}
@@ -26,11 +26,11 @@ Päivitetty {{ data.updated_timestamp | default('tuntematon aika') }} - <a href=
     line-height: 1.5;
     font-size: var(--font-size-base);
   }
-  
+
   .place-data p {
     margin: 0.5rem 0;
   }
-  
+
   .place-data strong {
     color: var(--color-text-primary);
     font-weight: 600;
@@ -41,7 +41,7 @@ Päivitetty {{ data.updated_timestamp | default('tuntematon aika') }} - <a href=
     .container {
       padding: 0 0.5rem;
     }
-    
+
     .card {
       margin-bottom: 0.75rem;
       padding: 0.75rem;

@@ -6,7 +6,7 @@
 {% block app_title %}{{ data.page_header }}{% endblock %}
 
 {% block footer_updated %}
-Päivitetty {{ data.updated_timestamp | default('tuntematon aika') }} - <a href="https://salo.fi/kulttuuri-ja-vapaa-aika/tapahtumat" target="_blank">Salon tapahtumat</a>
+Päivitetty {{ data.updated_timestamp | default('-') }} - <a href="https://salo.fi/kulttuuri-ja-vapaa-aika/tapahtumat" target="_blank">Salon tapahtumat</a>
 {% endblock %}
 
 {% block header_extra %}

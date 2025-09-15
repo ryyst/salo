@@ -1,16 +1,15 @@
 {% extends "base.html" %}
 {% from 'macros.html' import card %}
 
-{% block title %}🎬 Bio Salo{% endblock %}
+{% block title %}🎬 Bio-Salo{% endblock %}
 
-{% block app_title %}🎬 Bio Salo{% endblock %}
+{% block app_title %}🎬 Bio-Salo{% endblock %}
 
 {% block header_extra %}
-<div class="subtitle">Tulevat elokuvat - seuraavat 2 viikkoa</div>
 {% endblock %}
 
 {% block footer_updated %}
-Päivitetty {{ data.updated_timestamp | default('tuntematon aika') }} - <a href="https://biosalo.fi/" target="_blank">Bio Salo</a>
+Päivitetty {{ data.updated_timestamp | default('-') }} - <a href="https://biosalo.fi/" target="_blank">Bio Salo</a>
 {% endblock %}
 
 {% block content %}
