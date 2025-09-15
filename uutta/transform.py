@@ -7,13 +7,26 @@ from .config import UuttaConfig
 
 def clean_description(description: str) -> str:
     """Clean HTML and formatting from description text."""
+
     # Remove HTML tags
     description = re.sub(r"<[^>]+>", "", description)
+
     # Clean up whitespace and newlines
     description = re.sub(r"\s+", " ", description).strip()
-    # Limit length
-    if len(description) > 300:
-        description = description[:297] + "..."
+
+    # Remove "Artikkeli ... julkaistiin ensimmäisen kerran SSS.fi." RSS footer
+    description = re.sub(
+        r"\bArtikkeli .+ julkaistiin ensimmäisen kerran SSS\.fi\.$", "", description
+    ).strip()
+
+    # Remove "The post ... appeared first on ..." WordPress RSS footer
+    description = re.sub(
+        r"\bThe post .+ appeared first on .+\.$", "", description
+    ).strip()
+
+    # Replace HTML ellipsis entity with proper ellipsis
+    description = re.sub(r"\[&#8230;\]", "…", description)
+
     return description
 
 
