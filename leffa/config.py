@@ -5,7 +5,7 @@ from utils.schema import JSONModel
 class TheaterConfig(JSONModel):
     name: str
     site_url: str  # For movie links and footer links
-    api_url: str   # For API calls and image URLs  
+    api_url: str  # For API calls and image URLs
     movie_path: str = "elokuva"  # Movie page path (e.g. "elokuva" or "elokuva-2")
     location_id: int
     content_type_id: int = 1

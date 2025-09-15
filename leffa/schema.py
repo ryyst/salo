@@ -42,8 +42,8 @@ class Movie(BaseModel):
 
 class TheaterData(BaseModel):
     name: str
-    site_url: str    # For movie links and footer
-    api_url: str     # For images
+    site_url: str  # For movie links and footer
+    api_url: str  # For images
     movie_path: str  # Movie page path
     movies: List[Movie]
 

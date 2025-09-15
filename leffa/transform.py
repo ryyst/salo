@@ -246,14 +246,21 @@ def transform_movies(all_theater_data: List[Dict[str, Any]], config: LeffaConfig
         theater_api_url = theater_data.get("theater_api_url", "")
         theater_movie_path = theater_data.get("theater_movie_path", "elokuva")
 
-        movies = transform_theater_movies(theater_data, theater_name, theater_site_url, theater_api_url, theater_movie_path, config)
+        movies = transform_theater_movies(
+            theater_data,
+            theater_name,
+            theater_site_url,
+            theater_api_url,
+            theater_movie_path,
+            config,
+        )
 
         theater_obj = TheaterData(
-            name=theater_name, 
-            site_url=theater_site_url, 
+            name=theater_name,
+            site_url=theater_site_url,
             api_url=theater_api_url,
             movie_path=theater_movie_path,
-            movies=movies
+            movies=movies,
         )
         theaters.append(theater_obj)
 
