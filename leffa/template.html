@@ -1,88 +1,140 @@
 {% extends "base.html" %}
 {% from 'macros.html' import card %}
 
-{% block title %}🎬 Bio-Salo{% endblock %}
+{% block title %}🎬 Elokuvat Salossa{% endblock %}
 
-{% block app_title %}🎬 Bio-Salo{% endblock %}
+{% block app_title %}🎬 Elokuvat Salossa{% endblock %}
 
 {% block header_extra %}
+<div class="theater-selector">
+  {% for theater in data.theaters %}
+  <button class="theater-btn{% if loop.first %} active{% endif %}"
+          data-theater="{{ theater.name }}"
+          onclick="selectTheater('{{ theater.name }}')">
+    {{ theater.name }}
+  </button>
+  {% endfor %}
+</div>
 {% endblock %}
 
 {% block footer_updated %}
-Päivitetty {{ data.updated_timestamp | default('-') }} - <a href="https://biosalo.fi/" target="_blank">Bio Salo</a>
+Päivitetty {{ data.updated_timestamp | default('-') }} -
+{% for theater in data.theaters %}
+<a href="{{ theater.site_url }}/" target="_blank">{{ theater.name }}</a>{% if not loop.last %} | {% endif %}
+{% endfor %}
 {% endblock %}
 
 {% block content %}
 <div class="container">
-  {% if data.movies %}
-    {% for movie in data.movies %}
-      <div class="movie-card" data-movie-id="{{ loop.index }}">
-        <div class="movie-header" onclick="toggleShows(event, {{ loop.index }})">
-          <div class="movie-main">
-            {% if movie.poster_url %}
-              <img src="https://biosalo.fi/wp-content/plugins/nexxo-scope/banners/{{ movie.poster_url }}"
-                   alt="{{ movie.title }}" class="movie-poster" loading="lazy">
-            {% else %}
-              <div class="movie-poster-placeholder">🎬</div>
-            {% endif %}
-            <div class="movie-content-wrapper">
-              <h3 class="movie-title">
-                <a href="https://biosalo.fi/elokuva/?movie={{ movie.id }}" target="_blank">{{ movie.title }}</a>
-              </h3>
-              <div class="movie-meta">
-                {% if movie.genre %}<span class="genre-badge" data-genre="{{ movie.genre | lower }}">{{ movie.genre }}</span>{% endif %}
-                {% if movie.duration %}<span class="meta-badge">{{ movie.duration }}</span>{% endif %}
-                {% if movie.director %}<span class="meta-badge">{{ movie.director }}</span>{% endif %}
+  {% for theater in data.theaters %}
+    <div class="theater-section" data-theater="{{ theater.name }}"{% if not loop.first %} style="display: none;"{% endif %}>
+      {% if theater.movies %}
+        {% for movie in theater.movies %}
+          <div class="movie-card" data-movie-id="{{ theater.name }}-{{ loop.index }}">
+            <div class="movie-header" onclick="toggleShows(event, '{{ theater.name }}-{{ loop.index }}')">
+              <div class="movie-main">
+                {% if movie.poster_url %}
+                  <img src="{{ theater.api_url }}/wp-content/plugins/nexxo-scope/banners/{{ movie.poster_url }}"
+                       alt="{{ movie.title }}" class="movie-poster" loading="lazy">
+                {% else %}
+                  <div class="movie-poster-placeholder">🎬</div>
+                {% endif %}
+                <div class="movie-content-wrapper">
+                  <h3 class="movie-title">
+                    <a href="{{ theater.site_url }}/{{ theater.movie_path }}/?movie={{ movie.id }}" target="_blank">{{ movie.title }}</a>
+                  </h3>
+                  <div class="movie-meta">
+                    {% if movie.genre %}<span class="genre-badge" data-genre="{{ movie.genre | lower }}">{{ movie.genre }}</span>{% endif %}
+                    {% if movie.duration %}<span class="meta-badge">{{ movie.duration }}</span>{% endif %}
+                    {% if movie.director %}<span class="meta-badge">{{ movie.director }}</span>{% endif %}
+                  </div>
+                  {% if movie.intro %}
+                  <div class="movie-intro">{{ movie.intro }}</div>
+                  {% endif %}
+                  {% if movie.premiere_formatted %}
+                  <div class="movie-premiere{% if movie.premiere_upcoming %} premiere-future{% else %} premiere-past{% endif %}">Ensi-ilta: {{ movie.premiere_formatted }}{% if movie.premiere_relative %} {{ movie.premiere_relative }}{% endif %}</div>
+                  {% endif %}
+                </div>
+                <span class="shows-arrow" id="arrow-{{ theater.name }}-{{ loop.index }}">▼</span>
               </div>
-              {% if movie.intro %}
-              <div class="movie-intro">{{ movie.intro }}</div>
-              {% endif %}
-              {% if movie.premiere_formatted %}
-              <div class="movie-premiere{% if movie.premiere_upcoming %} premiere-future{% else %} premiere-past{% endif %}">Ensi-ilta: {{ movie.premiere_formatted }}{% if movie.premiere_relative %} {{ movie.premiere_relative }}{% endif %}</div>
-              {% endif %}
             </div>
-            <span class="shows-arrow" id="arrow-{{ loop.index }}">▼</span>
+            <div class="shows-content" id="shows-{{ theater.name }}-{{ loop.index }}" style="display: none;">
+              <div class="table-container">
+                <table class="shows-table">
+                  <thead>
+                    <tr>
+                      <th>Päivä</th>
+                      <th>Aika</th>
+                      <th>Sali</th>
+                      <th>€</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for show in movie.shows %}
+                    <tr class="show-row">
+                      <td class="show-day">{{ show.paiva }}</td>
+                      <td class="show-time">{{ show.aika }}</td>
+                      <td class="show-room">
+                        {{ show.room_title }}
+                        {% if show.note %}<span class="show-note">{{ show.note }}</span>{% endif %}
+                      </td>
+                      <td class="show-price">{{ show.price }}€</td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
+        {% endfor %}
+      {% else %}
+        <div class="no-movies">
+          Ei tulevia elokuvia löytynyt.
         </div>
-        <div class="shows-content" id="shows-{{ loop.index }}" style="display: none;">
-          <div class="table-container">
-            <table class="shows-table">
-              <thead>
-                <tr>
-                  <th>Päivä</th>
-                  <th>Aika</th>
-                  <th>Sali</th>
-                  <th>€</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for show in movie.shows %}
-                <tr class="show-row">
-                  <td class="show-day">{{ show.paiva }}</td>
-                  <td class="show-time">{{ show.aika }}</td>
-                  <td class="show-room">
-                    {{ show.room_title }}
-                    {% if show.note %}<span class="show-note">{{ show.note }}</span>{% endif %}
-                  </td>
-                  <td class="show-price">{{ show.price }}€</td>
-                </tr>
-                {% endfor %}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    {% endfor %}
-  {% else %}
-    <div class="no-movies">
-      Ei tulevia elokuvia löytynyt.
+      {% endif %}
     </div>
-  {% endif %}
+  {% endfor %}
 </div>
 {% endblock %}
 
 {% block styles %}
 <style>
+  /* Theater selector styling */
+  .theater-selector {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .theater-btn {
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--border-color);
+    color: var(--color-text-primary);
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    font-size: 0.9rem;
+  }
+
+  .theater-btn:hover {
+    background: var(--color-bg-tertiary);
+    border-color: var(--color-accent-primary);
+  }
+
+  .theater-btn.active {
+    background: var(--color-accent-primary);
+    color: white;
+    border-color: var(--color-accent-primary);
+  }
+
+  .theater-section {
+    transition: opacity 0.3s ease;
+  }
+
   /* Header subtitle styling */
   .subtitle {
     color: var(--color-text-secondary);
@@ -471,5 +523,18 @@ function toggleShows(event, movieId) {
   }
 }
 
+function selectTheater(theaterName) {
+  // Update button states
+  document.querySelectorAll('.theater-btn').forEach(btn => {
+    btn.classList.remove('active');
+  });
+  document.querySelector(`.theater-btn[data-theater="${theaterName}"]`).classList.add('active');
+
+  // Show/hide theater sections
+  document.querySelectorAll('.theater-section').forEach(section => {
+    section.style.display = 'none';
+  });
+  document.querySelector(`.theater-section[data-theater="${theaterName}"]`).style.display = 'block';
+}
 </script>
 {% endblock %}

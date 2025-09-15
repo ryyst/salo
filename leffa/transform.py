@@ -1,9 +1,9 @@
 import logging
 from datetime import datetime, timedelta
-from typing import Dict, Any
+from typing import Dict, Any, List
 from collections import defaultdict
 from .config import LeffaConfig
-from .schema import Movie, MovieShow, LeffaData
+from .schema import Movie, MovieShow, LeffaData, TheaterData
 
 logger = logging.getLogger(__name__)
 
@@ -99,10 +99,25 @@ def is_premiere_upcoming(premiere_str: str) -> bool:
         return False
 
 
-def transform_movies(raw_data: Dict[str, Any], config: LeffaConfig) -> LeffaData:
-    """Transform raw API data into structured movie listings."""
+def transform_theater_movies(
+    raw_data: Dict[str, Any],
+    theater_name: str,
+    theater_site_url: str,
+    theater_api_url: str,
+    theater_movie_path: str,
+    config: LeffaConfig,
+) -> List[Movie]:
+    """Transform raw API data into structured movie listings for a single theater."""
 
     shows = raw_data.get("shows", {})
+
+    # Handle case where shows is an empty list (like Kino Lumo)
+    if isinstance(shows, list):
+        if not shows:
+            logger.info(f"No shows data available for {theater_name}")
+            return []
+        # Convert list to dict format for compatibility
+        shows = {"": shows}
 
     # Group shows by movie ID
     movies_dict = defaultdict(lambda: {"shows": [], "movie_data": None})
@@ -135,9 +150,7 @@ def transform_movies(raw_data: Dict[str, Any], config: LeffaConfig) -> LeffaData
 
             # Create show object
             try:
-                show_time = datetime.strptime(
-                    show_data.get("startTime", ""), "%Y-%m-%d %H:%M:%S"
-                )
+                show_time = datetime.strptime(show_data.get("startTime", ""), "%Y-%m-%d %H:%M:%S")
                 # Finnish weekday abbreviations
                 weekdays = ["Ma", "Ti", "Ke", "To", "Pe", "La", "Su"]
                 weekday = weekdays[show_time.weekday()]
@@ -195,6 +208,7 @@ def transform_movies(raw_data: Dict[str, Any], config: LeffaConfig) -> LeffaData
             id=movie_id,
             title=movie_data.get("movieTitle", ""),
             shows=sorted_shows,
+            theater=theater_name,  # Add theater name
             genre=movie_data.get("genre", ""),
             director=movie_data.get("director", ""),
             intro=clean_html_tags(movie_data.get("intro", "")),
@@ -215,9 +229,35 @@ def transform_movies(raw_data: Dict[str, Any], config: LeffaConfig) -> LeffaData
     movies.sort(key=lambda m: m.premiere_date or "", reverse=True)
 
     logger.info(
-        f"Transformed {len(movies)} movies with total {sum(len(m.shows) for m in movies)} shows"
+        f"Transformed {len(movies)} movies for {theater_name} with total {sum(len(m.shows) for m in movies)} shows"
     )
 
+    return movies
+
+
+def transform_movies(all_theater_data: List[Dict[str, Any]], config: LeffaConfig) -> LeffaData:
+    """Transform raw API data from all theaters into structured movie listings."""
+
+    theaters = []
+
+    for theater_data in all_theater_data:
+        theater_name = theater_data.get("theater_name", "Unknown")
+        theater_site_url = theater_data.get("theater_site_url", "")
+        theater_api_url = theater_data.get("theater_api_url", "")
+        theater_movie_path = theater_data.get("theater_movie_path", "elokuva")
+
+        movies = transform_theater_movies(theater_data, theater_name, theater_site_url, theater_api_url, theater_movie_path, config)
+
+        theater_obj = TheaterData(
+            name=theater_name, 
+            site_url=theater_site_url, 
+            api_url=theater_api_url,
+            movie_path=theater_movie_path,
+            movies=movies
+        )
+        theaters.append(theater_obj)
+
     return LeffaData(
-        movies=movies, updated_timestamp=datetime.now().strftime("%d.%m.%Y klo %H:%M")
+        theaters=theaters,
+        updated_timestamp=datetime.now().strftime("%d.%m.%Y klo %H:%M"),
     )

@@ -9,19 +9,19 @@ from .transform import transform_movies
 logger = logging.getLogger(__name__)
 
 
-@register_runner("leffa", LeffaConfig, "Fetch and render movie listings from Bio Salo")
-def run_leffa_salo(params: LeffaConfig):
-    """Complete ETL pipeline for Bio Salo movie listings."""
+@register_runner("leffa", LeffaConfig, "Fetch and render movie listings from multiple theaters")
+def run_leffa_multi(params: LeffaConfig):
+    """Complete ETL pipeline for multiple theater movie listings."""
 
-    logger.info("Starting Bio Salo movie listings pipeline")
+    logger.info("Starting multi-theater movie listings pipeline")
 
-    # Fetch raw movie data from API
-    logger.info("Fetching movie data from biosalo.fi API")
-    raw_data = fetch_movies(params)
+    # Fetch raw movie data from all theaters
+    logger.info(f"Fetching movie data from {len(params.theaters)} theaters")
+    all_theater_data = fetch_movies(params)
 
     # Transform data into structured format
     logger.info("Transforming movie data")
-    movie_data = transform_movies(raw_data, params)
+    movie_data = transform_movies(all_theater_data, params)
 
     # Render to HTML
     logger.info("Rendering movie listings to HTML")
@@ -33,9 +33,13 @@ def run_leffa_salo(params: LeffaConfig):
     output_file = os.path.join(output_dir, "index.html")
     save_file(output_file, html)
 
-    logger.info(f"✅ Bio Salo movie listings pipeline completed successfully")
+    total_movies = sum(len(theater.movies) for theater in movie_data.theaters)
+    total_shows = sum(sum(len(m.shows) for m in theater.movies) for theater in movie_data.theaters)
+
+    logger.info(f"✅ Multi-theater movie listings pipeline completed successfully")
     logger.info(f"📁 Output: {output_file}")
-    logger.info(f"🎬 Movies: {len(movie_data.movies)}")
-    logger.info(f"🎭 Total shows: {sum(len(m.shows) for m in movie_data.movies)}")
+    logger.info(f"🎭 Theaters: {len(movie_data.theaters)}")
+    logger.info(f"🎬 Total movies: {total_movies}")
+    logger.info(f"🎞️ Total shows: {total_shows}")
 
     return output_file

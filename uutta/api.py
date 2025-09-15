@@ -44,11 +44,7 @@ class RSSFetcher(BaseAPI):
                         return ""
                     text = elem.text or ""
                     # Clean up common HTML entities in descriptions
-                    return (
-                        text.replace("&lt;", "<")
-                        .replace("&gt;", ">")
-                        .replace("&amp;", "&")
-                    )
+                    return text.replace("&lt;", "<").replace("&gt;", ">").replace("&amp;", "&")
 
                 # Extract media URL from enclosure or media:content elements
                 media_url = ""

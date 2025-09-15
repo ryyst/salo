@@ -20,9 +20,7 @@ def clean_description(description: str) -> str:
     ).strip()
 
     # Remove "The post ... appeared first on ..." WordPress RSS footer
-    description = re.sub(
-        r"\bThe post .+ appeared first on .+\.$", "", description
-    ).strip()
+    description = re.sub(r"\bThe post .+ appeared first on .+\.$", "", description).strip()
 
     # Replace HTML ellipsis entity with proper ellipsis
     description = re.sub(r"\[&#8230;\]", "…", description)
@@ -100,9 +98,7 @@ def transform_articles(
                     "source": "sss.fi",
                     "source_label": "sss.fi",
                     "categories": article.get("categories", []),
-                    "thumbnail_url": article.get(
-                        "media_url", ""
-                    ),  # Use actual media URL from RSS
+                    "thumbnail_url": article.get("media_url", ""),  # Use actual media URL from RSS
                 }
             )
         except Exception as e:
@@ -139,8 +135,6 @@ def transform_articles(
         "articles": unified_articles,
         "total_count": len(unified_articles),
         "sss_count": len([a for a in unified_articles if a["source"] == "sss.fi"]),
-        "salo_count": len(
-            [a for a in unified_articles if a["source"] == "salo_tiedotteet"]
-        ),
+        "salo_count": len([a for a in unified_articles if a["source"] == "salo_tiedotteet"]),
         "updated_timestamp": datetime.now().strftime("%d.%m.%Y klo %H:%M"),
     }

@@ -25,6 +25,7 @@ class Movie(BaseModel):
     id: str
     title: str
     shows: List[MovieShow]
+    theater: str  # Theater name
     genre: Optional[str] = None
     director: Optional[str] = None
     intro: Optional[str] = None
@@ -39,6 +40,14 @@ class Movie(BaseModel):
     premiere_upcoming: Optional[bool] = None
 
 
-class LeffaData(BaseModel):
+class TheaterData(BaseModel):
+    name: str
+    site_url: str    # For movie links and footer
+    api_url: str     # For images
+    movie_path: str  # Movie page path
     movies: List[Movie]
+
+
+class LeffaData(BaseModel):
+    theaters: List[TheaterData]
     updated_timestamp: str
