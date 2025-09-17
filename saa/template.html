@@ -56,11 +56,12 @@ Päivitetty {{ data.updated_timestamp }} - <a href="https://www.ilmatieteenlaito
 
             <td class="precipitation-cell">
               <div class="rain-info">
-                <span class="rain-amount {% if point.precipitation == 0 %}rain-none
+                <span class="rain-amount {% if point.precipitation is none %}rain-none
+                          {% elif point.precipitation == 0 %}rain-none
                           {% elif point.precipitation <= 0.5 %}rain-light
                           {% elif point.precipitation <= 2.0 %}rain-moderate
                           {% else %}rain-heavy{% endif %}">
-                  {% if point.precipitation is not none %}{{ "%.1f"|format(point.precipitation) }}mm{% else %}0mm{% endif %}
+                  {% if point.precipitation is not none %}{{ "%.1f"|format(point.precipitation) }}mm{% else %}-{% endif %}
                 </span>
                 {% if point.precipitation_probability is not none %}
                 <small class="rain-probability">({{ "%.0f"|format(point.precipitation_probability) }}%)</small>
@@ -121,6 +122,7 @@ Päivitetty {{ data.updated_timestamp }} - <a href="https://www.ilmatieteenlaito
   /* Daily forecast cards */
   .day-forecast-card {
     margin-bottom: 1.5rem;
+    padding-bottom: 0;
   }
 
   .day-summary {
@@ -308,26 +310,6 @@ Päivitetty {{ data.updated_timestamp }} - <a href="https://www.ilmatieteenlaito
 
     .time-cell {
       font-size: 0.65rem;
-    }
-
-    /* Hide less important columns on very small screens */
-    @media (max-width: 480px) {
-      .humidity-cell,
-      .weather-table th:nth-child(5) {
-        display: none;
-      }
-    }
-  }
-
-  /* Print styling */
-  @media print {
-    .day-forecast-card {
-      break-inside: avoid;
-      margin-bottom: 1rem;
-    }
-
-    .weather-icon {
-      font-size: 1rem;
     }
   }
 </style>

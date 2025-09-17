@@ -15,7 +15,7 @@ FMI_WEATHER_PARAMETERS = (
 FMI_STORED_QUERY_ID = "fmi::forecast::harmonie::surface::point::timevaluepair"
 
 # Coordinates for Salo, Finland
-SALO_COORDINATES = {"lat": 60.3841, "lng": 23.1288}
+SALO = {"lat": 60.3841, "lng": 23.1288}
 
 
 class FMIWeatherAPI(BaseAPI):
@@ -24,14 +24,25 @@ class FMIWeatherAPI(BaseAPI):
     def __init__(self):
         super().__init__("https://opendata.fmi.fi/wfs", {})
 
-    def get_optimal_timestep(self, future_hours: int) -> int:
-        """Get optimal timestep based on forecast duration."""
-        if future_hours <= 15:  # STEP_LIMIT_TINY
-            return 20
-        elif future_hours <= 20:  # STEP_LIMIT_SMALL
-            return 30
-        else:
-            return 60
+    def calculate_future_hours(self, future_days: int) -> int:
+        """
+        Calculate total hours to fetch based on future_days.
+        Always fetch until end of current day + 24 * future_days.
+        """
+        now = datetime.now()
+
+        # Start from current hour (rounded down, matching _build_forecast_params)
+        start_hour = now.replace(minute=0, second=0, microsecond=0)
+
+        # End of target day (end of current day + future_days)
+        end_of_target_day = start_hour.replace(
+            hour=23, minute=59, second=59, microsecond=999999
+        )
+        end_of_target_day += timedelta(days=future_days)
+
+        # Calculate hours between start and end
+        total_hours = int((end_of_target_day - start_hour).total_seconds() / 3600)
+        return total_hours
 
     def fetch_forecast(self, config: SaaConfig) -> Optional[str]:
         """
@@ -39,9 +50,12 @@ class FMIWeatherAPI(BaseAPI):
         Returns raw XML string or None if failed.
         """
         try:
-            Log.info(f"Fetching weather forecast for {config.place} ({config.future_hours}h)")
+            future_hours = self.calculate_future_hours(config.future_days)
+            Log.info(
+                f"Fetching weather forecast for {config.place} ({future_hours}h, {config.future_days} days)"
+            )
 
-            params = self._build_forecast_params(config)
+            params = self._build_forecast_params(config, future_hours)
             response = self.request("GET", "", {"params": params}, useJSON=False)
 
             return self._validate_response(response)
@@ -50,14 +64,27 @@ class FMIWeatherAPI(BaseAPI):
             Log.error(f"Unexpected error fetching weather data: {e}")
             return None
 
-    def _build_forecast_params(self, config: SaaConfig) -> Dict[str, str]:
+    def _get_optimal_timestep(self, future_hours: int) -> int:
+        """Get optimal timestep based on forecast duration."""
+        if future_hours <= 15:  # STEP_LIMIT_TINY
+            return 20
+        elif future_hours <= 20:  # STEP_LIMIT_SMALL
+            return 30
+        else:
+            return 60
+
+    def _build_forecast_params(
+        self, config: SaaConfig, future_hours: int
+    ) -> Dict[str, str]:
         """Build parameters for FMI API request."""
         now = datetime.now()
-        future_time = now + timedelta(hours=config.future_hours)
-        timestep = self.get_optimal_timestep(config.future_hours)
+        # Round down to current hour to include the ongoing hour
+        start_hour = now.replace(minute=0, second=0, microsecond=0)
+        future_time = start_hour + timedelta(hours=future_hours)
+        timestep = self._get_optimal_timestep(future_hours)
 
         # Format datetime for FMI API (needs Z suffix and no microseconds)
-        start_time = now.strftime("%Y-%m-%dT%H:%M:%SZ")
+        start_time = start_hour.strftime("%Y-%m-%dT%H:%M:%SZ")
         end_time = future_time.strftime("%Y-%m-%dT%H:%M:%SZ")
 
         return {
@@ -109,7 +136,7 @@ class SolarCalculator:
         eph = load("de421.bsp")
 
         # Create location for Salo
-        location = wgs84.latlon(SALO_COORDINATES["lat"] * N, SALO_COORDINATES["lng"] * E)
+        location = wgs84.latlon(SALO["lat"] * N, SALO["lng"] * E)
 
         # Define the date range for the calculation
         t0 = ts.utc(date.year, date.month, date.day)

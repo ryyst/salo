@@ -346,7 +346,7 @@ def _map_weather_parameter(
     if "temperature" in property_href:
         data_point["temperature"] = value
     elif "Precipitation1h" in property_href:
-        data_point["precipitation"] = value if value is not None else 0
+        data_point["precipitation"] = value
     elif "PoP" in property_href:
         data_point["precipitation_probability"] = _process_pop_value(value, time_str)
     elif "WindSpeedMS" in property_href:

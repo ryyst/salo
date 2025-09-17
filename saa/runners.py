@@ -46,14 +46,24 @@ def run_saa(config: SaaConfig):
     # Add solar data to daily forecasts
     daily_forecasts = add_solar_data_to_forecast(daily_forecasts, sunrise_sunset_data)
 
+    # Calculate future hours for context
+    from .api import FMIWeatherAPI
+
+    api = FMIWeatherAPI()
+    future_hours = api.calculate_future_hours(config.future_days)
+
     # Prepare and render template
     context = prepare_weather_context(
-        config.future_hours, forecast_data, daily_forecasts, station_info
+        future_hours, forecast_data, daily_forecasts, station_info
     )
     _render_weather_template(context, config)
 
-    Log.info(f"Weather forecast generated successfully at {config.output_dir}/index.html")
-    Log.info(f"Forecast covers {len(forecast_data)} time points over {config.future_hours} hours")
+    Log.info(
+        f"Weather forecast generated successfully at {config.output_dir}/index.html"
+    )
+    Log.info(
+        f"Forecast covers {len(forecast_data)} time points over {future_hours} hours ({config.future_days} days)"
+    )
 
 
 def _fetch_solar_data_for_days(daily_forecasts):
