@@ -290,8 +290,11 @@ Päivitetty {{ data.updated_timestamp | default('-') }} - <a href="https://salo.
   }
 
   /* Section styling */
-  .section {
-    margin-bottom: 3rem;
+  #ongoing-content {
+    margin-bottom: 1.5rem;
+  }
+  #ongoing-content.collapsed {
+    margin-bottom: 0rem;
   }
 
   .section-title {
@@ -384,7 +387,6 @@ Päivitetty {{ data.updated_timestamp | default('-') }} - <a href="https://salo.
 
   .collapsible-content {
     overflow: hidden;
-    transition: max-height 0.3s ease-out;
   }
 
   .collapsible-content.collapsed {
