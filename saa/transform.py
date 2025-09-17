@@ -300,14 +300,6 @@ def analyze_weather_warnings(day_points: List[Dict[str, Any]]) -> List[str]:
     moderate_wind_points = [
         p for p in day_points if p.get("wind_speed") and p["wind_speed"] >= 4
     ]
-    light_wind_points = [
-        p for p in day_points if p.get("wind_speed") and p["wind_speed"] >= 1
-    ]
-    calm_points = [
-        p for p in day_points if p.get("wind_speed") is not None and p["wind_speed"] < 1
-    ]
-
-    total_wind_points = len([p for p in day_points if p.get("wind_speed") is not None])
 
     if hurricane_points:
         warnings.append("Hirmumyrskyä 🌪️")
@@ -319,10 +311,6 @@ def analyze_weather_warnings(day_points: List[Dict[str, Any]]) -> List[str]:
         warnings.append("Navakkaa tuulta 💨")
     elif len(moderate_wind_points) >= 4:
         warnings.append("Kohtalaista tuulta 🍃")
-    elif total_wind_points > 0 and len(calm_points) >= total_wind_points * 0.75:
-        warnings.append("Tyyntä 🕊️")
-    elif total_wind_points > 0 and len(light_wind_points) >= total_wind_points * 0.5:
-        warnings.append("Heikkoa tuulta 🌱")
 
     # Analyze humidity
     humid_points = [p for p in day_points if p.get("humidity") and p["humidity"] > 80]

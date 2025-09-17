@@ -13,25 +13,31 @@ Päivitetty {{ data.updated_timestamp }} - <a href="https://www.ilmatieteenlaito
 <div class="container">
   <!-- Daily Forecast Cards -->
   {% for day in data.daily_forecasts %}
-  {% call card(title="" + day.day_name + " " + day.date_display, class="day-forecast-card") %}
-    <!-- Day summary with weather warnings and sunrise/sunset -->
-    <div class="day-summary">
-      {% if day.weather_warnings %}
-      <div class="weather-warnings">
-        {% for warning in day.weather_warnings %}
-        <span class="weather-warning">{{ warning }}</span>
-        {% endfor %}
+  <div class="day-forecast-card" data-day-id="day-{{ loop.index }}">
+    <div class="day-header" onclick="toggleDay(event, 'day-{{ loop.index }}')">
+      <div class="day-header-content">
+        <h3 class="day-title">{{ day.day_name }} {{ day.date_display }}</h3>
+        <!-- Day summary with weather warnings and sunrise/sunset -->
+        <div class="day-summary">
+          {% if day.weather_warnings %}
+          <div class="weather-warnings">
+            {% for warning in day.weather_warnings %}
+            <span class="weather-warning">{{ warning }}</span>
+            {% endfor %}
+          </div>
+          {% endif %}
+          {% if day.sunrise and day.sunset %}
+          <div class="sun-info">
+            Aurinko nousee {{ day.sunrise }}, laskee {{ day.sunset }}.<br/>Päivän pituus {{ day.day_length }}.
+          </div>
+          {% endif %}
+        </div>
       </div>
-      {% endif %}
-      {% if day.sunrise and day.sunset %}
-      <div class="sun-info">
-        Aurinko nousee {{ day.sunrise }}, laskee {{ day.sunset }}.<br/>Päivän pituus {{ day.day_length }}.
-      </div>
-      {% endif %}
+      <span class="day-arrow{% if loop.index == 1 %} expanded{% endif %}" id="arrow-day-{{ loop.index }}">▼</span>
     </div>
 
     <!-- Hourly forecast table -->
-    <div class="weather-table-container">
+    <div class="weather-table-container" id="content-day-{{ loop.index }}"  style="display: {% if loop.index > 1 %}none{% else %}block{% endif %};">
       <table class="weather-table">
         <thead>
           <tr>
@@ -99,7 +105,7 @@ Päivitetty {{ data.updated_timestamp }} - <a href="https://www.ilmatieteenlaito
         </tbody>
       </table>
     </div>
-  {% endcall %}
+  </div>
   {% endfor %}
 </div>
 {% endblock %}
@@ -128,15 +134,58 @@ Päivitetty {{ data.updated_timestamp }} - <a href="https://www.ilmatieteenlaito
 
   /* Daily forecast cards */
   .day-forecast-card {
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
     margin-bottom: 1.5rem;
-    padding-bottom: 0;
+    box-shadow: var(--shadow-sm);
+    transition: all 0.3s ease;
+  }
+
+  .day-forecast-card:hover {
+    box-shadow: var(--shadow-md);
+  }
+
+  .day-header {
+    padding: 1rem;
+    cursor: pointer;
+    user-select: none;
+    display: flex;
+    align-items: flex-start;
+    width: 100%;
+  }
+
+  .day-header-content {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .day-title {
+    margin: 0 0 0.5rem 0;
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+    color: var(--color-text-primary);
+  }
+
+  .day-arrow {
+    font-size: 18px;
+    transition: transform 0.3s ease;
+    cursor: pointer;
+    padding: 0.5rem;
+    margin-left: auto;
+    flex-shrink: 0;
+    color: var(--color-text-secondary);
+  }
+
+  .day-arrow.expanded {
+    transform: rotate(180deg);
   }
 
   .day-summary {
     display: flex;
     flex-wrap: wrap;
     gap: 1rem;
-    margin-bottom: 1rem;
+    margin-bottom: 0;
     align-items: flex-start;
   }
 
@@ -144,7 +193,6 @@ Päivitetty {{ data.updated_timestamp }} - <a href="https://www.ilmatieteenlaito
     display: flex;
     flex-wrap: wrap;
     gap: 0.5rem;
-    margin-bottom: 0.5rem;
   }
 
   .weather-warning {
@@ -152,7 +200,7 @@ Päivitetty {{ data.updated_timestamp }} - <a href="https://www.ilmatieteenlaito
     color: var(--color-text-primary);
     padding: 0.375rem 0.75rem;
     border-radius: var(--radius-md);
-    font-size: 0.875rem;
+    font-size: 0.75rem;
     font-weight: 500;
     border: 1px solid var(--border-color);
     white-space: nowrap;
@@ -170,7 +218,6 @@ Päivitetty {{ data.updated_timestamp }} - <a href="https://www.ilmatieteenlaito
   /* Weather table improvements */
   .weather-table-container {
     overflow-x: auto;
-    margin: 0 -1rem;
   }
 
   .weather-table {
@@ -311,12 +358,8 @@ Päivitetty {{ data.updated_timestamp }} - <a href="https://www.ilmatieteenlaito
       gap: 0.75rem;
     }
 
-    .weather-warnings {
-      margin-bottom: 0.25rem;
-    }
-
     .weather-warning {
-      font-size: 0.8rem;
+      font-size: 0.75rem;
       padding: 0.25rem 0.5rem;
     }
 
@@ -361,4 +404,21 @@ Päivitetty {{ data.updated_timestamp }} - <a href="https://www.ilmatieteenlaito
     }
   }
 </style>
+{% endblock %}
+
+{% block extra_head %}
+<script>
+function toggleDay(event, dayId) {
+  const content = document.getElementById('content-' + dayId);
+  const arrow = document.getElementById('arrow-' + dayId);
+
+  if (content.style.display === 'none' || content.style.display === '') {
+    content.style.display = 'block';
+    arrow.classList.add('expanded');
+  } else {
+    content.style.display = 'none';
+    arrow.classList.remove('expanded');
+  }
+}
+</script>
 {% endblock %}
