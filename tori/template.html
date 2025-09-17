@@ -12,10 +12,9 @@ Päivitetty {{ data.updated_timestamp | default('-') }} - <a href="https://salo.
 {% block header_extra %}
 <!-- Distance filters -->
 <div class="filters">
-  <button class="filter-btn" data-distance="all">Kaikki</button>
   <button class="filter-btn active" data-distance="close">Keskusta (&lt;5km)</button>
   <button class="filter-btn" data-distance="nearby">Lähistö (&lt;10km)</button>
-  <button class="filter-btn" data-distance="regional">Automatka (&lt;50km)</button>
+  <button class="filter-btn" data-distance="all">Kaikki</button>
 </div>
 {% endblock %}
 
@@ -48,7 +47,13 @@ Päivitetty {{ data.updated_timestamp | default('-') }} - <a href="https://salo.
             </div>
 
             <div class="event-dates">
-              {{ event.days_remaining }} päivää jäljellä
+              {% if event.days_remaining == 0 %}
+                Päättyy tänään
+              {% elif event.days_remaining == 1 %}
+                Päättyy huomenna
+              {% else %}
+                {{ event.days_remaining }} päivää jäljellä
+              {% endif %}
               <span class="event-start-date">
                 {% if event.excerpt %}
                   ({{ event.excerpt }})
@@ -68,14 +73,15 @@ Päivitetty {{ data.updated_timestamp | default('-') }} - <a href="https://salo.
     <h2 class="section-title">Tulevat</h2>
       {% for event in data.upcoming %}
         <div class="event upcoming card" data-distance="{{ event.distance_category }}" data-distance-km="{{ event.distance_km }}" style="border-left: 4px solid {% if 'Kulttuuri' in event.categories %}#e83e8c{% elif 'Urheilu' in event.categories %}#28a745{% elif 'Musiikki' in event.categories %}#6610f2{% elif 'Ilmainen' in event.categories %}#20c997{% else %}#6c757d{% endif %};">
-          <!-- Header with image and title -->
-          <div class="event-header">
-            {% if event.featured_image %}
-              <img src="{{ event.featured_image }}" alt="{{ event.title }}" class="event-image" loading="lazy">
-            {% else %}
-              <div class="event-placeholder">📅</div>
-            {% endif %}
+          <!-- Image -->
+          {% if event.featured_image %}
+            <img src="{{ event.featured_image }}" alt="{{ event.title }}" class="event-image" loading="lazy">
+          {% else %}
+            <div class="event-placeholder">📅</div>
+          {% endif %}
 
+          <!-- Content wrapper -->
+          <div class="event-content">
             <div class="event-title">
               {% if event.permalink %}
                 <a href="{{ event.permalink }}" target="_blank">{{ event.title }}</a>
@@ -83,38 +89,39 @@ Päivitetty {{ data.updated_timestamp | default('-') }} - <a href="https://salo.
                 {{ event.title }}
               {% endif %}
             </div>
-          </div>
 
-          <!-- Details below -->
-          <div class="event-details">
-            <div class="event-dates">
-              {% if event.days_until_start == 0 %}
-                Huomenna
-              {% else %}
-                {{ event.days_until_start }} päivän päästä
-              {% endif %}
-              <span class="event-start-date">
-                {% if event.excerpt %}
-                  ({{ event.excerpt }})
+            <div class="event-meta">
+              <div class="event-dates">
+                {% if event.days_until_start == 0 %}
+                  Tänään
+                {% elif event.days_until_start == 1 %}
+                  Huomenna
+                {% else %}
+                  {{ event.days_until_start }} päivän päästä
                 {% endif %}
-              </span>
-            </div>
+                <span class="event-start-date">
+                  {% if event.excerpt %}
+                    ({{ event.excerpt }})
+                  {% endif %}
+                </span>
+              </div>
 
-            {% if event.location %}
-            <div class="event-location">📍 {{ event.location }}
-              {% if event.distance_km > 0 %}
-              <span class="event-distance">({{ event.distance_km }}km)</span>
+              {% if event.location %}
+              <div class="event-location">{{ event.location }}
+                {% if event.distance_km > 0 %}
+                <span class="event-distance">({{ event.distance_km }}km)</span>
+                {% endif %}
+              </div>
+              {% endif %}
+
+              {% if event.categories %}
+              <div class="event-categories">
+                {% for category in event.categories %}
+                <span class="category">{{ category }}</span>
+                {% endfor %}
+              </div>
               {% endif %}
             </div>
-            {% endif %}
-
-            {% if event.categories %}
-            <div class="event-categories">
-              {% for category in event.categories %}
-              <span class="category">{{ category }}</span>
-              {% endfor %}
-            </div>
-            {% endif %}
           </div>
         </div>
       {% endfor %}
@@ -144,13 +151,20 @@ Päivitetty {{ data.updated_timestamp | default('-') }} - <a href="https://salo.
     flex-direction: column;
   }
 
+  /* Upcoming events - horizontal layout */
+  .event.upcoming {
+    flex-direction: row;
+    align-items: flex-start;
+    padding: 0.25rem 0.5rem;
+    gap: 0;
+  }
+
   .event-title {
     font-size: 1rem;
     font-weight: bold;
     margin-bottom: 0;
     color: var(--color-text-primary);
     flex: 1;
-    padding: 0.25rem 0.5rem;
     line-height: 1.3;
     max-height: calc(1.3em * 2);
     overflow: hidden;
@@ -199,41 +213,39 @@ Päivitetty {{ data.updated_timestamp | default('-') }} - <a href="https://salo.
   }
 
   .event-image {
-    align-self: baseline;
     width: 70px;
     height: 80px;
     object-fit: cover;
     border-radius: var(--radius-sm);
     flex-shrink: 0;
   }
-
   .event.upcoming .event-image {
-    border-top-right-radius: 0;
-    border-bottom-left-radius: 0;
+    margin-top: 0.75rem;
   }
 
   .event-content {
     flex: 1;
-  }
-
-  .event-header {
-    display: flex;
-    align-items: center;
-    gap: 0;
-  }
-
-  .event-details {
+    padding: 0.5rem;
     display: flex;
     flex-direction: column;
-    gap: 0rem;
+    gap: 0.25rem;
+  }
+
+  .event.upcoming .event-content {
     padding: 0.5rem;
+  }
+
+  .event-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
   }
 
   .event-placeholder {
     width: 70px;
-    height: 70px;
+    height: 80px;
     background: linear-gradient(135deg, var(--color-bg-primary), var(--color-bg-tertiary));
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-sm);
     flex-shrink: 0;
     display: flex;
     align-items: center;
@@ -293,10 +305,10 @@ Päivitetty {{ data.updated_timestamp | default('-') }} - <a href="https://salo.
 
   /* Compressed ongoing event styles */
   .event.ongoing {
-    padding: 0rem;
+    padding: 0rem !important;
     margin-bottom: 0.5rem;
-    gap: 0;
-    flex-direction: row;
+    gap: 0 !important;
+    flex-direction: row !important;
   }
 
   .event.ongoing a {
@@ -314,8 +326,10 @@ Päivitetty {{ data.updated_timestamp | default('-') }} - <a href="https://salo.
 
   .event.ongoing .event-content {
     align-content: center;
-    padding: 0.25rem 0.5rem;
+    padding: 0.25rem 0.5rem !important;
     overflow: hidden;
+    display: block !important;
+    gap: unset !important;
   }
 
   .event.ongoing .event-placeholder {
@@ -427,8 +441,6 @@ Päivitetty {{ data.updated_timestamp | default('-') }} - <a href="https://salo.
       } else if (selectedDistance === 'close' && distanceKm <= 5) {
         shouldShow = true;
       } else if (selectedDistance === 'nearby' && distanceKm <= 10) {
-        shouldShow = true;
-      } else if (selectedDistance === 'regional' && distanceKm <= 50) {
         shouldShow = true;
       }
 

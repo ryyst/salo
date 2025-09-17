@@ -55,15 +55,17 @@ def transform_events(data: RawData, params: ToriConfig):
         is_ongoing = start_datetime <= now <= end_datetime
         is_long_running = duration_days > 14  # Consider >2 weeks as long-running
 
-        # Calculate days remaining for ongoing events
+        # Calculate days remaining for ongoing events - same logic as leffa
         days_remaining = 0
         if is_ongoing:
-            days_remaining = (end_datetime - now).days
+            today = now.date()
+            end_date_obj = end_datetime.date()
+            days_remaining = (end_date_obj - today).days
 
-        # Calculate days until start for upcoming events
-        days_until_start = 0
-        if start_datetime > now:
-            days_until_start = (start_datetime - now).days
+        # Calculate days until start - same logic as leffa
+        today = now.date()
+        start_date_obj = start_datetime.date()
+        days_until_start = (start_date_obj - today).days
 
         # Extract location info
         location_parts = []
@@ -108,12 +110,15 @@ def transform_events(data: RawData, params: ToriConfig):
             }
         )
 
-    # Sort by start date
-    events.sort(key=lambda x: datetime.strptime(x["start_date"], "%d.%m.%Y"))
-
     # Split into ongoing and upcoming
     ongoing_events = [e for e in events if e["event_type"] == "ongoing"]
     upcoming_events = [e for e in events if e["event_type"] == "upcoming"]
+    
+    # Sort ongoing events by days remaining (soonest to expire first)
+    ongoing_events.sort(key=lambda x: x["days_remaining"])
+    
+    # Sort upcoming events by start date
+    upcoming_events.sort(key=lambda x: datetime.strptime(x["start_date"], "%d.%m.%Y"))
 
     return {
         "ongoing": ongoing_events,
