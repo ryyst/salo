@@ -155,7 +155,7 @@ Päivitetty {{ data.updated_timestamp | default('-') }} - <a href="https://salo.
   .event.upcoming {
     flex-direction: row;
     align-items: flex-start;
-    padding: 0.25rem 0.5rem;
+    padding: 0.75rem;
     gap: 0;
   }
 
@@ -214,13 +214,10 @@ Päivitetty {{ data.updated_timestamp | default('-') }} - <a href="https://salo.
 
   .event-image {
     width: 70px;
-    height: 80px;
+    height: 100px;
     object-fit: cover;
     border-radius: var(--radius-sm);
     flex-shrink: 0;
-  }
-  .event.upcoming .event-image {
-    margin-top: 0.75rem;
   }
 
   .event-content {
@@ -232,7 +229,8 @@ Päivitetty {{ data.updated_timestamp | default('-') }} - <a href="https://salo.
   }
 
   .event.upcoming .event-content {
-    padding: 0.5rem;
+    padding: 0;
+    padding-left: 0.75rem;
   }
 
   .event-meta {
