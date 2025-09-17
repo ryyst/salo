@@ -53,14 +53,10 @@ def run_saa(config: SaaConfig):
     future_hours = api.calculate_future_hours(config.future_days)
 
     # Prepare and render template
-    context = prepare_weather_context(
-        future_hours, forecast_data, daily_forecasts, station_info
-    )
+    context = prepare_weather_context(future_hours, forecast_data, daily_forecasts, station_info)
     _render_weather_template(context, config)
 
-    Log.info(
-        f"Weather forecast generated successfully at {config.output_dir}/index.html"
-    )
+    Log.info(f"Weather forecast generated successfully at {config.output_dir}/index.html")
     Log.info(
         f"Forecast covers {len(forecast_data)} time points over {future_hours} hours ({config.future_days} days)"
     )

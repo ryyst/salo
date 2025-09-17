@@ -35,9 +35,7 @@ class FMIWeatherAPI(BaseAPI):
         start_hour = now.replace(minute=0, second=0, microsecond=0)
 
         # End of target day (end of current day + future_days)
-        end_of_target_day = start_hour.replace(
-            hour=23, minute=59, second=59, microsecond=999999
-        )
+        end_of_target_day = start_hour.replace(hour=23, minute=59, second=59, microsecond=999999)
         end_of_target_day += timedelta(days=future_days)
 
         # Calculate hours between start and end
@@ -73,9 +71,7 @@ class FMIWeatherAPI(BaseAPI):
         else:
             return 60
 
-    def _build_forecast_params(
-        self, config: SaaConfig, future_hours: int
-    ) -> Dict[str, str]:
+    def _build_forecast_params(self, config: SaaConfig, future_hours: int) -> Dict[str, str]:
         """Build parameters for FMI API request."""
         now = datetime.now()
         # Round down to current hour to include the ongoing hour
