@@ -1,11 +1,15 @@
 from datetime import datetime
-from collections import defaultdict
 from config import register_runner
 from utils.logging import Log
 from utils.renderers import render_html, save_file
 from .config import SaaConfig
 from .fetch import fetch_weather_forecast, fetch_sunrise_sunset
-from .transform import parse_weather_xml
+from .transform import (
+    parse_weather_xml,
+    group_forecast_by_day,
+    add_solar_data_to_forecast,
+    prepare_weather_context,
+)
 
 
 @register_runner("saa", SaaConfig, "Generate weather forecast page for Salo")
@@ -34,81 +38,48 @@ def run_saa(config: SaaConfig):
     Log.info(f"Processing {len(forecast_data)} forecast points")
 
     # Group forecast data by day
-    forecast_by_day = defaultdict(list)
-    unique_dates = set()
+    daily_forecasts = group_forecast_by_day(forecast_data)
 
-    for point in forecast_data:
-        try:
-            # Parse the raw time to get the date
-            dt = datetime.fromisoformat(point["raw_time"].replace("Z", "+00:00"))
-            date_key = dt.strftime("%Y-%m-%d")
-            day_name = dt.strftime("%A")  # Full day name
-            date_display = dt.strftime("%d.%m.")
+    # Fetch sunrise/sunset data for each day
+    sunrise_sunset_data = _fetch_solar_data_for_days(daily_forecasts)
 
-            point["date_key"] = date_key
-            point["day_name"] = day_name
-            point["date_display"] = date_display
+    # Add solar data to daily forecasts
+    daily_forecasts = add_solar_data_to_forecast(daily_forecasts, sunrise_sunset_data)
 
-            forecast_by_day[date_key].append(point)
-            unique_dates.add(date_key)
-        except Exception as e:
-            Log.warning(f"Failed to parse date for point: {e}")
-            continue
+    # Prepare and render template
+    context = prepare_weather_context(
+        config.future_hours, forecast_data, daily_forecasts, station_info
+    )
+    _render_weather_template(context, config)
 
-    # Sort days chronologically
-    sorted_days = sorted(unique_dates)
+    Log.info(f"Weather forecast generated successfully at {config.output_dir}/index.html")
+    Log.info(f"Forecast covers {len(forecast_data)} time points over {config.future_hours} hours")
 
-    # Get sunrise/sunset for each unique day
+
+def _fetch_solar_data_for_days(daily_forecasts):
+    """Fetch sunrise/sunset data for all forecast days."""
+    if not daily_forecasts:
+        return {}
+
     sunrise_sunset_data = {}
-    for date_str in sorted_days:
+
+    for day_forecast in daily_forecasts:
+        date_str = day_forecast["date"]
         try:
             date_obj = datetime.strptime(date_str, "%Y-%m-%d")
-            solar_data = fetch_sunrise_sunset(config.place, date_obj)
+            solar_data = fetch_sunrise_sunset(date_obj)
             if solar_data:
                 sunrise_sunset_data[date_str] = solar_data
         except Exception as e:
             Log.warning(f"Failed to get sunrise/sunset for {date_str}: {e}")
 
-    # Organize forecast by day with additional info
-    daily_forecasts = []
-    for date_key in sorted_days:
-        day_points = forecast_by_day[date_key]
-        if day_points:
-            solar_info = sunrise_sunset_data.get(date_key, {})
-            daily_forecasts.append(
-                {
-                    "date": date_key,
-                    "day_name": day_points[0]["day_name"],
-                    "date_display": day_points[0]["date_display"],
-                    "points": day_points,
-                    "sunrise": solar_info.get("sunrise"),
-                    "sunset": solar_info.get("sunset"),
-                    "day_length": solar_info.get("day_length_formatted"),
-                }
-            )
+    return sunrise_sunset_data
 
-    # Prepare template context
-    title = f"Säätiedot - {config.place.capitalize()}"
-    if station_info and station_info.get("name"):
-        title = f"Säätiedot - {station_info['name']}"
 
-    context = {
-        "title": title,
-        "requested_location": config.place.capitalize(),
-        "forecast_data": forecast_data,  # Keep original for compatibility
-        "daily_forecasts": daily_forecasts,  # New organized data
-        "station_info": station_info,
-        "updated_timestamp": datetime.now().strftime("%d.%m.%Y klo %H:%M"),
-        "forecast_hours": config.future_hours,
-        "total_days": len(daily_forecasts),
-    }
-
-    # Render template to file
+def _render_weather_template(context, config):
+    """Render and save the weather template."""
     template_path = "saa/template.html"
     output_path = f"{config.output_dir}/index.html"
 
     html_content = render_html(context, template_path)
     save_file(output_path, html_content)
-
-    Log.info(f"Weather forecast generated successfully at {output_path}")
-    Log.info(f"Forecast covers {len(forecast_data)} time points over {config.future_hours} hours")

@@ -1,9 +1,8 @@
 import xml.etree.ElementTree as ET
 from datetime import datetime
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
+from collections import defaultdict
 from utils.logging import Log
-
-logger = Log
 
 
 def get_temperature_color(temp: Optional[float]) -> str:
@@ -74,8 +73,11 @@ def get_weather_icon(cloud_cover: Optional[int], precipitation: Optional[float])
     return "🌤️"  # Default partly sunny
 
 
-def format_time(date_str: str) -> str:
+def format_time(date_str: str | None) -> str:
     """Format datetime into readable format (e.g., 'Ma - 14:30')."""
+    if not date_str:
+        return ""
+
     try:
         dt = datetime.fromisoformat(date_str.replace("Z", "+00:00"))
         # Convert to local time for display
@@ -89,42 +91,8 @@ def format_time(date_str: str) -> str:
 
         return f"{day_name} - {time_str}"
     except Exception as e:
-        logger.warning(f"Failed to format time {date_str}: {e}")
+        Log.warning(f"Failed to format time {date_str}: {e}")
         return date_str
-
-
-def get_wind_direction_text(degrees: Optional[float]) -> str:
-    """Convert wind direction degrees to text representation."""
-    if degrees is None:
-        return "N/A"
-
-    # Convert degrees to compass direction
-    directions = [
-        "N",
-        "NNE",
-        "NE",
-        "ENE",
-        "E",
-        "ESE",
-        "SE",
-        "SSE",
-        "S",
-        "SSW",
-        "SW",
-        "WSW",
-        "W",
-        "WNW",
-        "NW",
-        "NNW",
-    ]
-
-    # Normalize degrees to 0-360 range
-    degrees = degrees % 360
-
-    # Calculate index (16 directions, so 360/16 = 22.5 degrees per direction)
-    index = int((degrees + 11.25) / 22.5) % 16
-
-    return directions[index]
 
 
 def parse_weather_xml(xml_string: str) -> Dict[str, Any]:
@@ -133,169 +101,39 @@ def parse_weather_xml(xml_string: str) -> Dict[str, Any]:
     Returns dict with weather data and station info.
     """
     if not xml_string or not xml_string.strip():
-        logger.error("Empty XML string provided")
+        Log.error("Empty XML string provided")
         return {"data": [], "station_info": None}
 
     try:
         root = ET.fromstring(xml_string)
-
-        # Define namespaces
-        namespaces = {
-            "wfs": "http://www.opengis.net/wfs/2.0",
-            "omso": "http://inspire.ec.europa.eu/schemas/omso/3.0",
-            "om": "http://www.opengis.net/om/2.0",
-            "wml2": "http://www.opengis.net/waterml/2.0",
-            "xlink": "http://www.w3.org/1999/xlink",
-            "gml": "http://www.opengis.net/gml/3.2",
-        }
+        namespaces = _get_xml_namespaces()
 
         # Extract station information
         station_info = extract_station_info(root, namespaces)
 
-        # Group data by timestamp
-        data_by_time = {}
+        # Parse raw observations from XML
+        raw_observations = _extract_observations(root, namespaces)
 
-        # Find all observation collections
-        observations = root.findall(".//omso:PointTimeSeriesObservation", namespaces)
+        # Group and process the data
+        weather_data = _process_weather_observations(raw_observations)
 
-        for obs in observations:
-            # Get the observed property to determine data type
-            observed_property = obs.find(".//om:observedProperty", namespaces)
-            property_href = ""
-            if observed_property is not None:
-                property_href = observed_property.get("{http://www.w3.org/1999/xlink}href", "")
+        # Enrich with calculated fields
+        enriched_data = _enrich_weather_data(weather_data)
 
-            # Find all measurement points in this observation
-            points = obs.findall(".//wml2:point", namespaces)
-
-            for point in points:
-                time_elem = point.find(".//wml2:time", namespaces)
-                value_elem = point.find(".//wml2:value", namespaces)
-
-                if time_elem is not None and value_elem is not None:
-                    time_str = time_elem.text
-                    value_text = value_elem.text
-
-                    try:
-                        value = float(value_text) if value_text != "NaN" else None
-                    except (ValueError, TypeError):
-                        value = None
-
-                    if time_str not in data_by_time:
-                        data_by_time[time_str] = {
-                            "time": format_time(time_str),
-                            "raw_time": time_str,
-                            "temperature": None,
-                            "precipitation": None,
-                            "precipitation_probability": None,
-                            "wind_speed": None,
-                            "wind_direction": None,
-                            "humidity": None,
-                            "cloud_cover": None,
-                        }
-
-                    # Determine parameter type based on observed property
-                    if "temperature" in property_href:
-                        data_by_time[time_str]["temperature"] = value
-                    elif "Precipitation1h" in property_href:
-                        # Handle NaN precipitation values by treating them as 0
-                        data_by_time[time_str]["precipitation"] = value if value is not None else 0
-                    elif "PoP" in property_href:
-                        # Handle PoP (Probability of Precipitation) values
-                        if value is not None:
-                            # Debug: log raw PoP values
-                            logger.debug(f"Raw PoP value: {value} for time {time_str}")
-
-                            # Handle different possible value ranges
-                            if value > 1:
-                                # If value is already a percentage (0-100), use as is
-                                pop_value = max(0, min(100, value))
-                            else:
-                                # Value is a fraction (0-1), convert to percentage
-                                pop_value = max(0, min(1, value)) * 100
-
-                            data_by_time[time_str]["precipitation_probability"] = pop_value
-                            logger.debug(f"Processed PoP: {pop_value}% for time {time_str}")
-                        else:
-                            data_by_time[time_str]["precipitation_probability"] = None
-                    elif "WindSpeedMS" in property_href:
-                        data_by_time[time_str]["wind_speed"] = value if value is not None else 0
-                    elif "WindDirection" in property_href:
-                        data_by_time[time_str]["wind_direction"] = value if value is not None else 0
-                    elif "Humidity" in property_href:
-                        data_by_time[time_str]["humidity"] = value if value is not None else None
-                    elif "TotalCloudCover" in property_href:
-                        # Cloud cover is given as a fraction (0-1), convert to percentage
-                        if value is not None:
-                            # Debug: log raw cloud cover values to understand the data
-                            logger.debug(f"Raw cloud cover value: {value} for time {time_str}")
-
-                            # Handle different possible value ranges
-                            if value > 1:
-                                # If value is already a percentage (0-100), use as is
-                                clamped_value = max(0, min(100, value)) / 100
-                            else:
-                                # Value is a fraction (0-1), use directly
-                                clamped_value = max(0, min(1, value))
-
-                            cloud_percentage = int(clamped_value * 100)
-                            data_by_time[time_str]["cloud_cover"] = cloud_percentage
-                            logger.debug(
-                                f"Processed cloud cover: {cloud_percentage}% for time {time_str}"
-                            )
-                        else:
-                            data_by_time[time_str]["cloud_cover"] = None
-
-        # Convert to sorted list
-        sorted_times = sorted(
-            data_by_time.keys(),
-            key=lambda x: datetime.fromisoformat(x.replace("Z", "+00:00")),
-        )
-        sorted_data = [data_by_time[time_str] for time_str in sorted_times]
-
-        # Fill missing PoP values with sensible defaults based on actual precipitation
-        for point in sorted_data:
-            # If PoP is missing or 0, but there's actual precipitation, estimate PoP
-            if (
-                (
-                    point["precipitation_probability"] is None
-                    or point["precipitation_probability"] == 0
-                )
-                and point["precipitation"] is not None
-                and point["precipitation"] > 0
-            ):
-                # Estimate PoP based on precipitation amount
-                if point["precipitation"] >= 2.0:
-                    point["precipitation_probability"] = 90  # Heavy rain = high probability
-                elif point["precipitation"] >= 0.5:
-                    point["precipitation_probability"] = 70  # Moderate rain = medium probability
-                elif point["precipitation"] >= 0.1:
-                    point["precipitation_probability"] = 50  # Light rain = moderate probability
-                else:
-                    point["precipitation_probability"] = 20  # Trace amounts = low probability
-            # If still no PoP value, default to 0
-            elif point["precipitation_probability"] is None:
-                point["precipitation_probability"] = 0
-
-        # Add wind direction text, temperature colors, and weather icons
-        for point in sorted_data:
-            point["wind_direction_text"] = get_wind_direction_text(point["wind_direction"])
-            point["temperature_color"] = get_temperature_color(point["temperature"])
-            point["weather_icon"] = get_weather_icon(point["cloud_cover"], point["precipitation"])
-
-        logger.info(f"Parsed {len(sorted_data)} weather forecast points")
-
-        return {"data": sorted_data, "station_info": station_info}
+        Log.info(f"Parsed {len(enriched_data)} weather forecast points")
+        return {"data": enriched_data, "station_info": station_info}
 
     except ET.ParseError as e:
-        logger.error(f"XML parsing failed: {e}")
+        Log.error(f"XML parsing failed: {e}")
         return {"data": [], "station_info": None}
     except Exception as e:
-        logger.error(f"Unexpected error parsing weather XML: {e}")
+        Log.error(f"Unexpected error parsing weather XML: {e}")
         return {"data": [], "station_info": None}
 
 
-def extract_station_info(root: ET.Element, namespaces: Dict[str, str]) -> Optional[Dict[str, str]]:
+def extract_station_info(
+    root: ET.Element, namespaces: Dict[str, str]
+) -> Optional[Dict[str, str | None]]:
     """Extract station information from XML root."""
     try:
         # Look for station name and info in various places
@@ -327,5 +165,280 @@ def extract_station_info(root: ET.Element, namespaces: Dict[str, str]) -> Option
         return None
 
     except Exception as e:
-        logger.warning(f"Failed to extract station info: {e}")
+        Log.warning(f"Failed to extract station info: {e}")
         return None
+
+
+def group_forecast_by_day(forecast_data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """
+    Group forecast data by day and add date metadata.
+    Returns list of daily forecast objects.
+    """
+    if not forecast_data:
+        return []
+
+    forecast_by_day = defaultdict(list)
+    unique_dates = set()
+
+    for point in forecast_data:
+        try:
+            # Parse the raw time to get the date
+            dt = datetime.fromisoformat(point["raw_time"].replace("Z", "+00:00"))
+            date_key = dt.strftime("%Y-%m-%d")
+            day_name = dt.strftime("%A")
+            date_display = dt.strftime("%d.%m.")
+
+            point["date_key"] = date_key
+            point["day_name"] = day_name
+            point["date_display"] = date_display
+
+            forecast_by_day[date_key].append(point)
+            unique_dates.add(date_key)
+        except Exception as e:
+            Log.warning(f"Failed to parse date for point: {e}")
+            continue
+
+    # Sort days chronologically
+    sorted_days = sorted(unique_dates)
+
+    # Organize forecast by day
+    daily_forecasts = []
+    for date_key in sorted_days:
+        day_points = forecast_by_day[date_key]
+        if day_points:
+            daily_forecasts.append(
+                {
+                    "date": date_key,
+                    "day_name": day_points[0]["day_name"],
+                    "date_display": day_points[0]["date_display"],
+                    "points": day_points,
+                }
+            )
+
+    return daily_forecasts
+
+
+def add_solar_data_to_forecast(
+    daily_forecasts: List[Dict[str, Any]],
+    sunrise_sunset_data: Dict[str, Dict[str, Any]],
+) -> List[Dict[str, Any]]:
+    """
+    Add sunrise/sunset data to daily forecasts.
+    """
+    for day_forecast in daily_forecasts:
+        date_key = day_forecast["date"]
+        solar_info = sunrise_sunset_data.get(date_key, {})
+        day_forecast.update(
+            {
+                "sunrise": solar_info.get("sunrise"),
+                "sunset": solar_info.get("sunset"),
+                "day_length": solar_info.get("day_length_formatted"),
+            }
+        )
+
+    return daily_forecasts
+
+
+def prepare_weather_context(
+    future_hours: int,
+    forecast_data: List[Dict[str, Any]],
+    daily_forecasts: List[Dict[str, Any]],
+    station_info: Optional[Dict[str, Any]],
+) -> Dict[str, Any]:
+    """
+    Prepare template context for weather forecast rendering.
+    """
+    title = "Säätiedot - Salo"
+    if station_info and station_info.get("name"):
+        title = f"Säätiedot - {station_info['name']}"
+
+    return {
+        "title": title,
+        "requested_location": "Salo",
+        "forecast_data": forecast_data,  # Keep original for compatibility
+        "daily_forecasts": daily_forecasts,  # New organized data
+        "station_info": station_info,
+        "updated_timestamp": datetime.now().strftime("%d.%m.%Y klo %H:%M"),
+        "forecast_hours": future_hours,
+        "total_days": len(daily_forecasts),
+    }
+
+
+def _get_xml_namespaces() -> Dict[str, str]:
+    """Get XML namespaces used by FMI API."""
+    return {
+        "wfs": "http://www.opengis.net/wfs/2.0",
+        "omso": "http://inspire.ec.europa.eu/schemas/omso/3.0",
+        "om": "http://www.opengis.net/om/2.0",
+        "wml2": "http://www.opengis.net/waterml/2.0",
+        "xlink": "http://www.w3.org/1999/xlink",
+        "gml": "http://www.opengis.net/gml/3.2",
+    }
+
+
+def _extract_observations(
+    root: ET.Element, namespaces: Dict[str, str]
+) -> Dict[str, Dict[str, Any]]:
+    """Extract raw weather observations from XML into time-indexed dict."""
+    data_by_time = {}
+    observations = root.findall(".//omso:PointTimeSeriesObservation", namespaces)
+
+    if not observations:
+        return data_by_time
+
+    for obs in observations:
+        # Get the observed property to determine data type
+        observed_property = obs.find(".//om:observedProperty", namespaces)
+        if observed_property is None:
+            continue
+
+        property_href = observed_property.get("{http://www.w3.org/1999/xlink}href", "")
+        if not property_href:
+            continue
+
+        # Find all measurement points in this observation
+        points = obs.findall(".//wml2:point", namespaces)
+
+        for point in points:
+            time_elem = point.find(".//wml2:time", namespaces)
+            value_elem = point.find(".//wml2:value", namespaces)
+
+            if time_elem is None or value_elem is None:
+                continue
+
+            time_str = time_elem.text
+            if not time_str:
+                continue
+
+            value_text = value_elem.text
+
+            try:
+                value = float(value_text) if value_text and value_text != "NaN" else None
+            except (ValueError, TypeError):
+                value = None
+
+            if time_str not in data_by_time:
+                data_by_time[time_str] = {
+                    "time": format_time(time_str),
+                    "raw_time": time_str,
+                    "temperature": None,
+                    "precipitation": None,
+                    "precipitation_probability": None,
+                    "wind_speed": None,
+                    "wind_direction": None,
+                    "humidity": None,
+                    "cloud_cover": None,
+                }
+
+            # Map weather parameter values
+            _map_weather_parameter(data_by_time[time_str], property_href, value, time_str)
+
+    return data_by_time
+
+
+def _map_weather_parameter(
+    data_point: Dict[str, Any],
+    property_href: str,
+    value: Optional[float],
+    time_str: str,
+) -> None:
+    """Map a weather parameter value to the correct field in data point."""
+    if "temperature" in property_href:
+        data_point["temperature"] = value
+    elif "Precipitation1h" in property_href:
+        data_point["precipitation"] = value if value is not None else 0
+    elif "PoP" in property_href:
+        data_point["precipitation_probability"] = _process_pop_value(value, time_str)
+    elif "WindSpeedMS" in property_href:
+        data_point["wind_speed"] = value if value is not None else 0
+    elif "WindDirection" in property_href:
+        data_point["wind_direction"] = value if value is not None else 0
+    elif "Humidity" in property_href:
+        data_point["humidity"] = value
+    elif "TotalCloudCover" in property_href:
+        data_point["cloud_cover"] = _process_cloud_cover_value(value, time_str)
+
+
+def _process_pop_value(value: Optional[float], time_str: str) -> Optional[float]:
+    """Process Probability of Precipitation value."""
+    if value is None:
+        return value
+
+    Log.debug(f"Raw PoP value: {value} for time {time_str}")
+
+    # Handle different possible value ranges
+    if value > 1:
+        pop_value = max(0, min(100, value))
+    else:
+        pop_value = max(0, min(1, value)) * 100
+
+    Log.debug(f"Processed PoP: {pop_value}% for time {time_str}")
+    return pop_value
+
+
+def _process_cloud_cover_value(value: Optional[float], time_str: str) -> Optional[int]:
+    """Process cloud cover value and convert to percentage."""
+    if value is None:
+        return value
+
+    Log.debug(f"Raw cloud cover value: {value} for time {time_str}")
+
+    # Handle different possible value ranges
+    if value > 1:
+        clamped_value = max(0, min(100, value)) / 100
+    else:
+        clamped_value = max(0, min(1, value))
+
+    cloud_percentage = int(clamped_value * 100)
+    Log.debug(f"Processed cloud cover: {cloud_percentage}% for time {time_str}")
+    return cloud_percentage
+
+
+def _process_weather_observations(
+    data_by_time: Dict[str, Dict[str, Any]],
+) -> List[Dict[str, Any]]:
+    """Process raw weather observations into sorted list."""
+    # Convert to sorted list
+    sorted_times = sorted(
+        data_by_time.keys(),
+        key=lambda x: datetime.fromisoformat(x.replace("Z", "+00:00")),
+    )
+    return [data_by_time[time_str] for time_str in sorted_times]
+
+
+def _enrich_weather_data(weather_data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """Enrich weather data with calculated fields and missing value handling."""
+    if not weather_data:
+        return weather_data
+
+    # Fill missing PoP values with sensible defaults based on actual precipitation
+    for point in weather_data:
+        _fill_missing_pop_values(point)
+
+        # Add calculated visual fields
+        point["temperature_color"] = get_temperature_color(point["temperature"])
+        point["weather_icon"] = get_weather_icon(point["cloud_cover"], point["precipitation"])
+
+    return weather_data
+
+
+def _fill_missing_pop_values(point: Dict[str, Any]) -> None:
+    """Fill missing PoP values based on precipitation data."""
+    # If PoP is missing or 0, but there's actual precipitation, estimate PoP
+    if (
+        (point["precipitation_probability"] is None or point["precipitation_probability"] == 0)
+        and point["precipitation"] is not None
+        and point["precipitation"] > 0
+    ):
+        # Estimate PoP based on precipitation amount
+        if point["precipitation"] >= 2.0:
+            point["precipitation_probability"] = 90  # Heavy rain = high probability
+        elif point["precipitation"] >= 0.5:
+            point["precipitation_probability"] = 70  # Moderate rain = medium probability
+        elif point["precipitation"] >= 0.1:
+            point["precipitation_probability"] = 50  # Light rain = moderate probability
+        else:
+            point["precipitation_probability"] = 20  # Trace amounts = low probability
+    # If still no PoP value, default to 0
+    elif point["precipitation_probability"] is None:
+        point["precipitation_probability"] = 0
