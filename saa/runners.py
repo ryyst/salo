@@ -87,5 +87,5 @@ def _render_weather_template(context, config):
     template_path = "saa/template.html"
     output_path = f"{config.output_dir}/index.html"
 
-    html_content = render_html(context, template_path)
+    html_content = render_html(context, template_path, auto_refresh_minutes=[5, 25, 45])
     save_file(output_path, html_content)

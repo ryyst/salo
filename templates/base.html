@@ -48,6 +48,10 @@
 
     <script>
       {% include 'static/js/theme-toggle.js' %}
+      {% if auto_refresh_minutes %}
+      {% include 'static/js/auto-refresh.js' %}
+      scheduleAutoRefresh({{ auto_refresh_minutes | tojson }});
+      {% endif %}
     </script>
 
     {% block scripts %}{% endblock %}

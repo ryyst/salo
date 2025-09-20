@@ -13,9 +13,9 @@ jinja = Environment(loader=FileSystemLoader([".", "templates"]), autoescape=sele
 #
 
 
-def render_html(data, template_path: str):
+def render_html(data, template_path: str, auto_refresh_minutes=None):
     template = jinja.get_template(template_path)
-    return template.render(data=data)
+    return template.render(data=data, auto_refresh_minutes=auto_refresh_minutes)
 
 
 def render_stdout(data, params=None):

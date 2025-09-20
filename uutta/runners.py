@@ -22,7 +22,7 @@ def run_uutta(params: UuttaConfig) -> None:
 
     # 3. Render news HTML page
     template_path = "uutta/templates/template.html"
-    html = render_html(transformed_data, template_path)
+    html = render_html(transformed_data, template_path, auto_refresh_minutes=[5, 25, 45])
 
     # Use CLI output directory + runner name
     output_dir = os.path.join(get_output_dir(), "uutta")
