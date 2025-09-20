@@ -229,9 +229,7 @@ def analyze_weather_warnings(day_points: List[Dict[str, Any]]) -> List[str]:
     warnings = []
 
     # Analyze precipitation
-    rain_points = [
-        p for p in day_points if p.get("precipitation") and p["precipitation"] > 0.0
-    ]
+    rain_points = [p for p in day_points if p.get("precipitation") and p["precipitation"] > 0.0]
     moderate_rain_points = [
         p for p in day_points if p.get("precipitation") and p["precipitation"] > 0.5
     ]
@@ -259,19 +257,13 @@ def analyze_weather_warnings(day_points: List[Dict[str, Any]]) -> List[str]:
 
     # Analyze sunshine/clouds
     sunny_points = [
-        p
-        for p in day_points
-        if p.get("cloud_cover") is not None and p["cloud_cover"] < 25
+        p for p in day_points if p.get("cloud_cover") is not None and p["cloud_cover"] < 25
     ]
     mostly_sunny_points = [
-        p
-        for p in day_points
-        if p.get("cloud_cover") is not None and p["cloud_cover"] < 50
+        p for p in day_points if p.get("cloud_cover") is not None and p["cloud_cover"] < 50
     ]
     cloudy_points = [
-        p
-        for p in day_points
-        if p.get("cloud_cover") is not None and p["cloud_cover"] > 75
+        p for p in day_points if p.get("cloud_cover") is not None and p["cloud_cover"] > 75
     ]
 
     total_points = len([p for p in day_points if p.get("cloud_cover") is not None])
@@ -285,21 +277,11 @@ def analyze_weather_warnings(day_points: List[Dict[str, Any]]) -> List[str]:
             warnings.append("Pilvinen päivä ☁️")
 
     # Analyze wind using Finnish meteorological classification
-    hurricane_points = [
-        p for p in day_points if p.get("wind_speed") and p["wind_speed"] >= 33
-    ]
-    storm_points = [
-        p for p in day_points if p.get("wind_speed") and p["wind_speed"] >= 21
-    ]
-    strong_wind_points = [
-        p for p in day_points if p.get("wind_speed") and p["wind_speed"] >= 14
-    ]
-    brisk_wind_points = [
-        p for p in day_points if p.get("wind_speed") and p["wind_speed"] >= 8
-    ]
-    moderate_wind_points = [
-        p for p in day_points if p.get("wind_speed") and p["wind_speed"] >= 4
-    ]
+    hurricane_points = [p for p in day_points if p.get("wind_speed") and p["wind_speed"] >= 33]
+    storm_points = [p for p in day_points if p.get("wind_speed") and p["wind_speed"] >= 21]
+    strong_wind_points = [p for p in day_points if p.get("wind_speed") and p["wind_speed"] >= 14]
+    brisk_wind_points = [p for p in day_points if p.get("wind_speed") and p["wind_speed"] >= 8]
+    moderate_wind_points = [p for p in day_points if p.get("wind_speed") and p["wind_speed"] >= 4]
 
     if hurricane_points:
         warnings.append("Hirmumyrskyä 🌪️")
@@ -314,17 +296,13 @@ def analyze_weather_warnings(day_points: List[Dict[str, Any]]) -> List[str]:
 
     # Analyze humidity
     humid_points = [p for p in day_points if p.get("humidity") and p["humidity"] > 80]
-    total_humidity_points = len(
-        [p for p in day_points if p.get("humidity") is not None]
-    )
+    total_humidity_points = len([p for p in day_points if p.get("humidity") is not None])
 
     if total_humidity_points > 0 and len(humid_points) >= total_humidity_points * 0.75:
         warnings.append("Kostea ilma 💧")
 
     # Analyze temperature
-    temperatures = [
-        p["temperature"] for p in day_points if p.get("temperature") is not None
-    ]
+    temperatures = [p["temperature"] for p in day_points if p.get("temperature") is not None]
     if temperatures:
         max_temp = max(temperatures)
         min_temp = min(temperatures)
@@ -358,9 +336,7 @@ def add_solar_data_to_forecast(
         )
 
         # Add weather warnings
-        day_forecast["weather_warnings"] = analyze_weather_warnings(
-            day_forecast["points"]
-        )
+        day_forecast["weather_warnings"] = analyze_weather_warnings(day_forecast["points"])
 
     return daily_forecasts
 
@@ -439,9 +415,7 @@ def _extract_observations(
             value_text = value_elem.text
 
             try:
-                value = (
-                    float(value_text) if value_text and value_text != "NaN" else None
-                )
+                value = float(value_text) if value_text and value_text != "NaN" else None
             except (ValueError, TypeError):
                 value = None
 
@@ -459,9 +433,7 @@ def _extract_observations(
                 }
 
             # Map weather parameter values
-            _map_weather_parameter(
-                data_by_time[time_str], property_href, value, time_str
-            )
+            _map_weather_parameter(data_by_time[time_str], property_href, value, time_str)
 
     return data_by_time
 
@@ -547,9 +519,7 @@ def _enrich_weather_data(weather_data: List[Dict[str, Any]]) -> List[Dict[str, A
 
         # Add calculated visual fields
         point["temperature_color"] = get_temperature_color(point["temperature"])
-        point["weather_icon"] = get_weather_icon(
-            point["cloud_cover"], point["precipitation"]
-        )
+        point["weather_icon"] = get_weather_icon(point["cloud_cover"], point["precipitation"])
 
     return weather_data
 
@@ -558,10 +528,7 @@ def _fill_missing_pop_values(point: Dict[str, Any]) -> None:
     """Fill missing PoP values based on precipitation data."""
     # If PoP is missing or 0, but there's actual precipitation, estimate PoP
     if (
-        (
-            point["precipitation_probability"] is None
-            or point["precipitation_probability"] == 0
-        )
+        (point["precipitation_probability"] is None or point["precipitation_probability"] == 0)
         and point["precipitation"] is not None
         and point["precipitation"] > 0
     ):
@@ -569,9 +536,7 @@ def _fill_missing_pop_values(point: Dict[str, Any]) -> None:
         if point["precipitation"] >= 2.0:
             point["precipitation_probability"] = 90  # Heavy rain = high probability
         elif point["precipitation"] >= 0.5:
-            point["precipitation_probability"] = (
-                70  # Moderate rain = medium probability
-            )
+            point["precipitation_probability"] = 70  # Moderate rain = medium probability
         elif point["precipitation"] >= 0.1:
             point["precipitation_probability"] = 50  # Light rain = moderate probability
         else:

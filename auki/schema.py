@@ -82,3 +82,4 @@ class RawData(BaseModel):
 
     library: Optional[LibraryData] = None
     pharmacy: Optional[str] = None
+    krauta: Optional[dict] = None

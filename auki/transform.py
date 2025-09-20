@@ -9,7 +9,7 @@ from .utils import (
 
 
 def transform_combined(data: RawData, params: AukiConfig):
-    """Transform combined library and pharmacy data into unified format"""
+    """Transform combined library, pharmacy and K-Rauta data into unified format"""
     places = []
 
     # Process library data if present
@@ -21,6 +21,11 @@ def transform_combined(data: RawData, params: AukiConfig):
     if data.pharmacy:
         pharmacy_place = transform_pharmacy(data.pharmacy, params)
         places.append(pharmacy_place)
+
+    # Process K-Rauta data if present
+    if data.krauta:
+        krauta_place = transform_krauta(data.krauta, params)
+        places.append(krauta_place)
 
     return {
         "places": places,
@@ -74,3 +79,38 @@ def transform_pharmacy(data: str, params: AukiConfig):
     text = parts[0].strip() if parts else raw_text
 
     return {"place_name": "Yliopiston Apteekki Salo", "place_data": text}
+
+
+def transform_krauta(data: dict, params: AukiConfig):
+    """Complete K-Rauta transformation - from HTML table to display format"""
+    if not data or "opening_hours" not in data:
+        return {"place_name": "K-Rauta Passeli", "place_data": "Aukioloaikoja ei saatavilla"}
+
+    opening_hours = data["opening_hours"]
+    store_name = data.get("name", "K-Rauta Passeli")
+
+    # Convert the parsed HTML data to consistent format
+    schedule_parts = []
+
+    for entry in opening_hours:
+        day_text = entry["day"]
+        hours_text = entry["hours"]
+
+        # Convert day names to abbreviations
+        if "Maanantai - Perjantai" in day_text:
+            day_abbr = "Ma–Pe"
+        elif "Lauantai" in day_text:
+            day_abbr = "La"
+        elif "Sunnuntai" in day_text:
+            day_abbr = "Su"
+        else:
+            day_abbr = day_text  # Fallback
+
+        # Format hours (convert 07-18 to 07–18 with proper dash)
+        formatted_hours = hours_text.replace("-", "–")
+
+        schedule_parts.append(f"{day_abbr} {formatted_hours}")
+
+    formatted_schedule = ", ".join(schedule_parts)
+
+    return {"place_name": store_name, "place_data": formatted_schedule}

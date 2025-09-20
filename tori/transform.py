@@ -113,10 +113,10 @@ def transform_events(data: RawData, params: ToriConfig):
     # Split into ongoing and upcoming
     ongoing_events = [e for e in events if e["event_type"] == "ongoing"]
     upcoming_events = [e for e in events if e["event_type"] == "upcoming"]
-    
+
     # Sort ongoing events by days remaining (soonest to expire first)
     ongoing_events.sort(key=lambda x: x["days_remaining"])
-    
+
     # Sort upcoming events by start date
     upcoming_events.sort(key=lambda x: datetime.strptime(x["start_date"], "%d.%m.%Y"))
 

@@ -5,6 +5,7 @@ from utils.schema import JSONModel
 class AukiConfig(JSONModel):
     library_id: str = Field(description="Library ID for Kirjastot.fi API")
     location_id: str = Field(description="Location ID for HTML scrapers (pharmacy locations, etc.)")
+    krauta_url: str = Field(description="K-Rauta store URL for opening hours", default="")
 
     css_selector: str = Field(description="CSS selector for HTML scrapers")
 
