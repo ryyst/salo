@@ -19,6 +19,7 @@ Päivitetty {{ data.updated_timestamp | default('-') }} - <a href="https://salo.
 {% endblock %}
 
 {% block content %}
+  <div id="favorites-area"></div>
   <!-- Ongoing long-running events section -->
   {% if data.ongoing %}
   {% call container("section container") %}
@@ -63,6 +64,11 @@ Päivitetty {{ data.updated_timestamp | default('-') }} - <a href="https://salo.
               </span>
             </div>
           </div>
+
+          <!-- Star button for favoriting -->
+          <button class="star-btn" data-event-id="{{ event.id }}" onclick="toggleFavorite({{ event.id }})">
+            ☆
+          </button>
         </div>
       {% endfor %}
     </div>
@@ -125,6 +131,11 @@ Päivitetty {{ data.updated_timestamp | default('-') }} - <a href="https://salo.
               {% endif %}
             </div>
           </div>
+
+          <!-- Star button for favoriting -->
+          <button class="star-btn" data-event-id="{{ event.id }}" onclick="toggleFavorite({{ event.id }})">
+            ☆
+          </button>
         </div>
       {% endfor %}
     </div>
@@ -151,6 +162,7 @@ Päivitetty {{ data.updated_timestamp | default('-') }} - <a href="https://salo.
     box-shadow: var(--shadow-sm);
     display: flex;
     flex-direction: column;
+    position: relative;
   }
 
   /* Upcoming events - horizontal layout */
@@ -297,6 +309,14 @@ Päivitetty {{ data.updated_timestamp | default('-') }} - <a href="https://salo.
     margin-bottom: 0rem;
   }
 
+  /* Favorites section styling - same as ongoing */
+  #favorites-content {
+    margin-bottom: 1.5rem;
+  }
+  #favorites-content.collapsed {
+    margin-bottom: 0rem;
+  }
+
   .section-title {
     font-size: 1.5rem;
     font-weight: bold;
@@ -396,15 +416,241 @@ Päivitetty {{ data.updated_timestamp | default('-') }} - <a href="https://salo.
   .collapsible-content.expanded {
     max-height: 10000px;
   }
+
+  /* Star button styling */
+  .star-btn {
+    position: absolute;
+    bottom: 0.25rem;
+    right: 0.25rem;
+    width: 24px;
+    height: 24px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    color: var(--color-text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    z-index: 10;
+    border-radius: 4px;
+  }
+
+  .star-btn:hover {
+    background: var(--color-bg-tertiary);
+    transform: scale(1.1);
+  }
+
+  .star-btn.favorited {
+    color: #ffc107;
+  }
+
+  .star-btn.favorited:hover {
+    background: var(--color-bg-tertiary);
+  }
 </style>
 {% endblock %}
 
 {% block scripts %}
 <script>
+  // Favorites Management
+  class FavoritesManager {
+    constructor() {
+      this.storageKey = 'tori-favorites';
+      this.favorites = this.loadFavorites();
+      this.allEvents = []; // Store all event data for processing
+    }
+
+    loadFavorites() {
+      try {
+        const stored = localStorage.getItem(this.storageKey);
+        return stored ? JSON.parse(stored) : [];
+      } catch (error) {
+        console.error('Error loading favorites:', error);
+        return [];
+      }
+    }
+
+    saveFavorites() {
+      try {
+        localStorage.setItem(this.storageKey, JSON.stringify(this.favorites));
+      } catch (error) {
+        console.error('Error saving favorites:', error);
+      }
+    }
+
+    isFavorited(eventId) {
+      return this.favorites.includes(eventId);
+    }
+
+    toggleFavorite(eventId) {
+      const index = this.favorites.indexOf(eventId);
+      if (index === -1) {
+        this.favorites.push(eventId);
+      } else {
+        this.favorites.splice(index, 1);
+      }
+      this.saveFavorites();
+      this.updateUI();
+      this.renderFavorites();
+    }
+
+    getFavorites() {
+      return this.favorites;
+    }
+
+    updateUI() {
+      // Update all star button states and hide favorited events from original locations
+      document.querySelectorAll('.star-btn').forEach(btn => {
+        const eventId = parseInt(btn.getAttribute('data-event-id'));
+        const isFav = this.isFavorited(eventId);
+        btn.classList.toggle('favorited', isFav);
+        btn.textContent = isFav ? '⭐' : '☆';
+
+        // Hide/show event in original location based on favorite status
+        const eventCard = btn.closest('.event');
+        if (eventCard && !eventCard.closest('#favorites-area')) {
+          // Only hide events that are NOT in the favorites area
+          eventCard.style.display = isFav ? 'none' : '';
+        }
+      });
+    }
+
+    // Store event data for processing favorites
+    storeEventData(ongoing, upcoming) {
+      this.allEvents = [...ongoing, ...upcoming];
+    }
+
+    renderFavorites() {
+      // Get favorited events
+      const favoritedEvents = this.allEvents.filter(event =>
+        this.isFavorited(event.id)
+      );
+
+      const favoritesArea = document.getElementById('favorites-area');
+
+      if (favoritedEvents.length === 0) {
+        // Clear favorites area if no favorites
+        favoritesArea.innerHTML = '';
+        return;
+      }
+
+      // Generate favorites HTML
+      favoritesArea.innerHTML = `
+        <div class="section container">
+          <div class="collapsible-header section-title" onclick="toggleFavorites()">
+            <span>Seuratut</span>
+            <span class="collapse-icon" id="favorites-icon">▼</span>
+          </div>
+          <div class="collapsible-content expanded" id="favorites-content">
+            ${favoritedEvents.map(event => this.renderEventCard(event)).join('')}
+          </div>
+        </div>
+      `;
+
+      // Update star buttons in favorites section
+      favoritesArea.querySelectorAll('.star-btn').forEach(btn => {
+        const eventId = parseInt(btn.getAttribute('data-event-id'));
+        btn.classList.add('favorited');
+        btn.textContent = '⭐';
+        btn.onclick = () => this.toggleFavorite(eventId);
+      });
+    }
+
+    renderEventCard(event) {
+      const imageHtml = event.featured_image
+        ? `<img src="${event.featured_image}" alt="${event.title}" class="event-image" loading="lazy">`
+        : `<div class="event-placeholder">📅</div>`;
+
+      const titleHtml = event.permalink
+        ? `<a href="${event.permalink}" target="_blank">${event.title}</a>`
+        : event.title;
+
+      const isOngoing = event.event_type === 'ongoing';
+
+      let datesHtml;
+      if (isOngoing) {
+        if (event.days_remaining === 0 && event.duration_days === 0) {
+          datesHtml = 'Juuri nyt';
+        } else if (event.days_remaining === 0) {
+          datesHtml = 'Päättyy tänään';
+        } else if (event.days_remaining === 1) {
+          datesHtml = 'Päättyy huomenna';
+        } else {
+          datesHtml = `${event.days_remaining} päivää jäljellä`;
+        }
+      } else {
+        if (event.days_until_start === 0) {
+          datesHtml = 'Tänään';
+        } else if (event.days_until_start === 1) {
+          datesHtml = 'Huomenna';
+        } else {
+          datesHtml = `${event.days_until_start} päivän päästä`;
+        }
+      }
+
+      const excerptHtml = event.excerpt ? `<span class="event-start-date">(${event.excerpt})</span>` : '';
+
+      let locationHtml = '';
+      if (event.location) {
+        const distanceHtml = event.distance_km > 0 ? `<span class="event-distance">(${event.distance_km}km)</span>` : '';
+        locationHtml = `<div class="event-location">${event.location} ${distanceHtml}</div>`;
+      }
+
+      let categoriesHtml = '';
+      if (event.categories && event.categories.length > 0) {
+        categoriesHtml = `<div class="event-categories">
+          ${event.categories.map(cat => `<span class="category">${cat}</span>`).join('')}
+        </div>`;
+      }
+
+      const borderColor = event.categories.includes('Kulttuuri') ? '#e83e8c' :
+                          event.categories.includes('Urheilu') ? '#28a745' :
+                          event.categories.includes('Musiikki') ? '#6610f2' :
+                          event.categories.includes('Ilmainen') ? '#20c997' : '#6c757d';
+
+      return `
+        <div class="event ${event.event_type} ${isOngoing ? '' : 'card'}"
+             data-distance="${event.distance_category}"
+             data-distance-km="${event.distance_km}"
+             style="border-left: 4px solid ${borderColor};">
+          ${imageHtml}
+          <div class="event-content">
+            <div class="event-title">${titleHtml}</div>
+            ${isOngoing ? `
+              <div class="event-dates">${datesHtml} ${excerptHtml}</div>
+            ` : `
+              <div class="event-meta">
+                <div class="event-dates">${datesHtml} ${excerptHtml}</div>
+                ${locationHtml}
+                ${categoriesHtml}
+              </div>
+            `}
+          </div>
+          <button class="star-btn favorited" data-event-id="${event.id}">⭐</button>
+        </div>
+      `;
+    }
+  }
+
+  // Initialize favorites manager
+  const favoritesManager = new FavoritesManager();
+
+  // Global function for star button clicks
+  function toggleFavorite(eventId) {
+    favoritesManager.toggleFavorite(eventId);
+  }
+
   // Apply initial filter immediately to prevent flash
   const events = document.querySelectorAll('.event');
 
   events.forEach(event => {
+    // Skip events in favorites area
+    if (event.closest('#favorites-area')) {
+      return;
+    }
+
     const distanceKm = parseFloat(event.getAttribute('data-distance-km')) || 0;
     // Apply the default "close" filter (<5km) immediately
     if (distanceKm > 5) {
@@ -430,14 +676,43 @@ Päivitetty {{ data.updated_timestamp | default('-') }} - <a href="https://salo.
     }
   }
 
+  // Simple accordion toggle for favorites
+  function toggleFavorites() {
+    const content = document.getElementById('favorites-content');
+    const icon = document.getElementById('favorites-icon');
+
+    if (content.classList.contains('collapsed')) {
+      content.classList.remove('collapsed');
+      content.classList.add('expanded');
+      icon.classList.remove('collapsed');
+    } else {
+      content.classList.remove('expanded');
+      content.classList.add('collapsed');
+      icon.classList.add('collapsed');
+    }
+  }
+
   // Apply distance filter function
   function applyDistanceFilter(selectedDistance) {
     const events = document.querySelectorAll('.event');
 
     events.forEach(event => {
-      const distanceKm = parseFloat(event.getAttribute('data-distance-km')) || 0;
-      let shouldShow = false;
+      // Skip events in favorites area
+      if (event.closest('#favorites-area')) {
+        return;
+      }
 
+      const distanceKm = parseFloat(event.getAttribute('data-distance-km')) || 0;
+      const eventId = parseInt(event.querySelector('.star-btn').getAttribute('data-event-id'));
+      const isFavorited = favoritesManager.isFavorited(eventId);
+
+      // Don't show favorited events in original locations
+      if (isFavorited) {
+        event.style.display = 'none';
+        return;
+      }
+
+      let shouldShow = false;
       if (selectedDistance === 'all') {
         shouldShow = true;
       } else if (selectedDistance === 'close' && distanceKm <= 5) {
@@ -461,6 +736,19 @@ Päivitetty {{ data.updated_timestamp | default('-') }} - <a href="https://salo.
       const selectedDistance = this.getAttribute('data-distance');
       applyDistanceFilter(selectedDistance);
     });
+  });
+</script>
+
+<script>
+  // Initialize favorites on page load
+  document.addEventListener('DOMContentLoaded', function() {
+    // Pass event data to favorites manager
+    const ongoingEvents = {{ data.ongoing | tojson | safe }};
+    const upcomingEvents = {{ data.upcoming | tojson | safe }};
+
+    favoritesManager.storeEventData(ongoingEvents, upcomingEvents);
+    favoritesManager.updateUI();
+    favoritesManager.renderFavorites();
   });
 </script>
 {% endblock %}

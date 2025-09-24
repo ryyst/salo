@@ -88,6 +88,7 @@ def transform_events(data: RawData, params: ToriConfig):
 
         events.append(
             {
+                "id": event["id"],
                 "title": event["title"],
                 "excerpt": event.get("excerpt", ""),
                 "start_date": start_date,

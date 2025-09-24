@@ -118,7 +118,7 @@ Each module follows this pattern:
 ### Output Structure
 - Generated static files are placed in `_out/` subdirectories (configurable via CLI)
 - Each module creates its own output subdirectory (e.g., `_out/swimmi/`, `_out/auki/`)
-- HTML files use Jinja2 templates with module-specific template paths
+- HTML files use Jinja2 templates, always located in modlue-specific app/template.html file.
 - Multiple pages can be generated per runner (e.g., swimmi generates daily pages)
 
 ### Caching and Data Management
@@ -315,7 +315,7 @@ module/
 ```
 
 #### Template Location
-Templates MUST be located at `module/templates/template.html` or similar descriptive name.
+Templates MUST be located at `module/template.html` or similar descriptive name.
 
 #### Data Context
 The `render_html()` function passes data as `data=context`, so all template variables must be accessed as `data.variable_name`.
