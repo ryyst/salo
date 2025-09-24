@@ -29,7 +29,7 @@ Päivitetty {{ data.updated_timestamp | default('-') }} - <a href="https://salo.
     </div>
     <div class="collapsible-content expanded" id="ongoing-content">
       {% for event in data.ongoing %}
-        <div class="event ongoing" data-distance="{{ event.distance_category }}" data-distance-km="{{ event.distance_km }}" style="border-left: 4px solid {% if 'Kulttuuri' in event.categories %}#e83e8c{% elif 'Urheilu' in event.categories %}#28a745{% elif 'Musiikki' in event.categories %}#6610f2{% elif 'Ilmainen' in event.categories %}#20c997{% else %}#6c757d{% endif %};">
+        <div class="event ongoing" data-distance="{{ event.distance_category }}" data-distance-km="{{ event.distance_km if event.distance_km is not none else '' }}" style="border-left: 4px solid {% if 'Kulttuuri' in event.categories %}#e83e8c{% elif 'Urheilu' in event.categories %}#28a745{% elif 'Musiikki' in event.categories %}#6610f2{% elif 'Ilmainen' in event.categories %}#20c997{% else %}#6c757d{% endif %};">
           <!-- Small image or placeholder -->
           {% if event.featured_image %}
             <img src="{{ event.featured_image }}" alt="{{ event.title }}" class="event-image" loading="lazy">
@@ -80,7 +80,7 @@ Päivitetty {{ data.updated_timestamp | default('-') }} - <a href="https://salo.
   {% call container("section container") %}
     <h2 class="section-title">Tulevat</h2>
       {% for event in data.upcoming %}
-        <div class="event upcoming card" data-distance="{{ event.distance_category }}" data-distance-km="{{ event.distance_km }}" style="border-left: 4px solid {% if 'Kulttuuri' in event.categories %}#e83e8c{% elif 'Urheilu' in event.categories %}#28a745{% elif 'Musiikki' in event.categories %}#6610f2{% elif 'Ilmainen' in event.categories %}#20c997{% else %}#6c757d{% endif %};">
+        <div class="event upcoming card" data-distance="{{ event.distance_category }}" data-distance-km="{{ event.distance_km if event.distance_km is not none else '' }}" style="border-left: 4px solid {% if 'Kulttuuri' in event.categories %}#e83e8c{% elif 'Urheilu' in event.categories %}#28a745{% elif 'Musiikki' in event.categories %}#6610f2{% elif 'Ilmainen' in event.categories %}#20c997{% else %}#6c757d{% endif %};">
           <!-- Image -->
           {% if event.featured_image %}
             <img src="{{ event.featured_image }}" alt="{{ event.title }}" class="event-image" loading="lazy">
@@ -116,7 +116,7 @@ Päivitetty {{ data.updated_timestamp | default('-') }} - <a href="https://salo.
 
               {% if event.location %}
               <div class="event-location">{{ event.location }}
-                {% if event.distance_km > 0 %}
+                {% if event.distance_km is not none and event.distance_km > 0 %}
                 <span class="event-distance">({{ event.distance_km }}km)</span>
                 {% endif %}
               </div>
@@ -512,7 +512,16 @@ Päivitetty {{ data.updated_timestamp | default('-') }} - <a href="https://salo.
         const eventCard = btn.closest('.event');
         if (eventCard && !eventCard.closest('#favorites-area')) {
           // Only hide events that are NOT in the favorites area
-          eventCard.style.display = isFav ? 'none' : '';
+          if (isFav) {
+            eventCard.style.display = 'none';
+          } else {
+            // Re-apply current distance filter instead of showing all
+            const activeFilter = document.querySelector('.filter-btn.active');
+            if (activeFilter) {
+              const selectedDistance = activeFilter.getAttribute('data-distance');
+              applyDistanceFilterToEvent(eventCard, selectedDistance);
+            }
+          }
         }
       });
     }
@@ -594,7 +603,7 @@ Päivitetty {{ data.updated_timestamp | default('-') }} - <a href="https://salo.
 
       let locationHtml = '';
       if (event.location) {
-        const distanceHtml = event.distance_km > 0 ? `<span class="event-distance">(${event.distance_km}km)</span>` : '';
+        const distanceHtml = (event.distance_km !== null && event.distance_km > 0) ? `<span class="event-distance">(${event.distance_km}km)</span>` : '';
         locationHtml = `<div class="event-location">${event.location} ${distanceHtml}</div>`;
       }
 
@@ -613,7 +622,7 @@ Päivitetty {{ data.updated_timestamp | default('-') }} - <a href="https://salo.
       return `
         <div class="event ${event.event_type} ${isOngoing ? '' : 'card'}"
              data-distance="${event.distance_category}"
-             data-distance-km="${event.distance_km}"
+             data-distance-km="${event.distance_km || ''}"
              style="border-left: 4px solid ${borderColor};">
           ${imageHtml}
           <div class="event-content">
@@ -651,9 +660,9 @@ Päivitetty {{ data.updated_timestamp | default('-') }} - <a href="https://salo.
       return;
     }
 
-    const distanceKm = parseFloat(event.getAttribute('data-distance-km')) || 0;
-    // Apply the default "close" filter (<5km) immediately
-    if (distanceKm > 5) {
+    const distanceCategory = event.getAttribute('data-distance');
+    // Apply the default "close" filter (<5km) immediately, hide events without location data
+    if (distanceCategory === 'unknown' || distanceCategory !== 'close') {
       event.style.display = 'none';
     }
   });
@@ -692,6 +701,33 @@ Päivitetty {{ data.updated_timestamp | default('-') }} - <a href="https://salo.
     }
   }
 
+  // Helper function to apply distance filter to a single event
+  function applyDistanceFilterToEvent(event, selectedDistance) {
+    const distanceCategory = event.getAttribute('data-distance');
+    const distanceKm = parseFloat(event.getAttribute('data-distance-km'));
+    const eventId = parseInt(event.querySelector('.star-btn').getAttribute('data-event-id'));
+    const isFavorited = favoritesManager.isFavorited(eventId);
+
+    // Don't show favorited events in original locations
+    if (isFavorited) {
+      event.style.display = 'none';
+      return;
+    }
+
+    let shouldShow = false;
+    if (selectedDistance === 'all') {
+      shouldShow = true;  // Show all events, including those without GPS data
+    } else if (distanceCategory === 'unknown') {
+      shouldShow = false;  // Hide events without GPS data in distance filters
+    } else if (selectedDistance === 'close' && distanceCategory === 'close') {
+      shouldShow = true;
+    } else if (selectedDistance === 'nearby' && ['close', 'nearby'].includes(distanceCategory)) {
+      shouldShow = true;
+    }
+
+    event.style.display = shouldShow ? 'flex' : 'none';
+  }
+
   // Apply distance filter function
   function applyDistanceFilter(selectedDistance) {
     const events = document.querySelectorAll('.event');
@@ -702,26 +738,7 @@ Päivitetty {{ data.updated_timestamp | default('-') }} - <a href="https://salo.
         return;
       }
 
-      const distanceKm = parseFloat(event.getAttribute('data-distance-km')) || 0;
-      const eventId = parseInt(event.querySelector('.star-btn').getAttribute('data-event-id'));
-      const isFavorited = favoritesManager.isFavorited(eventId);
-
-      // Don't show favorited events in original locations
-      if (isFavorited) {
-        event.style.display = 'none';
-        return;
-      }
-
-      let shouldShow = false;
-      if (selectedDistance === 'all') {
-        shouldShow = true;
-      } else if (selectedDistance === 'close' && distanceKm <= 5) {
-        shouldShow = true;
-      } else if (selectedDistance === 'nearby' && distanceKm <= 10) {
-        shouldShow = true;
-      }
-
-      event.style.display = shouldShow ? 'flex' : 'none';
+      applyDistanceFilterToEvent(event, selectedDistance);
     });
   }
 

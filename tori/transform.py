@@ -78,12 +78,13 @@ def transform_events(data: RawData, params: ToriConfig):
         categories = [cat["name"] for cat in event.get("classes", [])]
 
         # Calculate distance from Salo center
-        distance_km = 0
-        distance_category = "close"  # default
-        if event.get("gps_lat") and event.get("gps_lng"):
-            distance_km = calculate_distance(
+        distance_km = None
+        distance_category = "unknown"  # default for events without GPS
+        if event.get("gps_lat") is not None and event.get("gps_lng") is not None:
+            raw_distance = calculate_distance(
                 SALO_CENTER_LAT, SALO_CENTER_LON, event["gps_lat"], event["gps_lng"]
             )
+            distance_km = round(raw_distance, 1)
             distance_category = categorize_distance(distance_km)
 
         events.append(
@@ -99,7 +100,7 @@ def transform_events(data: RawData, params: ToriConfig):
                 "categories": categories,
                 "permalink": event.get("permalink", ""),
                 "featured_image": event.get("featuredImage", ""),
-                "distance_km": round(distance_km, 1),
+                "distance_km": distance_km,
                 "distance_category": distance_category,
                 "duration_days": duration_days,
                 "is_ongoing": is_ongoing,
