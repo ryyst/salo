@@ -48,6 +48,11 @@ def transform_events(data: RawData, params: ToriConfig):
         # Convert timestamps to datetime objects and readable dates
         start_datetime = datetime.fromtimestamp(event["startDate"])
         end_datetime = datetime.fromtimestamp(event["endDate"])
+
+        # Skip completely past events (ended before now)
+        if end_datetime < now:
+            continue
+
         start_date = start_datetime.strftime("%d.%m.%Y")
         end_date = end_datetime.strftime("%d.%m.%Y")
         start_date_short = start_datetime.strftime("%d.%m.")
