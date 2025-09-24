@@ -8,6 +8,9 @@ from .config import ToriConfig
 SALO_CENTER_LAT = 60.384041
 SALO_CENTER_LON = 23.128951
 
+# Categories to ignore when displaying events
+IGNORED_CATEGORIES = ["Maksullisuus"]
+
 
 def calculate_distance(lat1, lon1, lat2, lon2):
     """Calculate distance between two GPS coordinates using Haversine formula."""
@@ -74,8 +77,12 @@ def transform_events(data: RawData, params: ToriConfig):
             location_parts.append(event["locationText"])
         location = ", ".join(location_parts) if location_parts else "Ei sijaintia"
 
-        # Extract categories
-        categories = [cat["name"] for cat in event.get("classes", [])]
+        # Extract categories, filtering out ignored ones
+        categories = [
+            cat["name"]
+            for cat in event.get("classes", [])
+            if cat["name"] not in IGNORED_CATEGORIES
+        ]
 
         # Calculate distance from Salo center
         distance_km = None
