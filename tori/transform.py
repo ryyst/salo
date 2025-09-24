@@ -53,7 +53,6 @@ def transform_events(data: RawData, params: ToriConfig):
         # Calculate duration and determine if it's ongoing
         duration_days = (end_datetime - start_datetime).days
         is_ongoing = start_datetime <= now <= end_datetime
-        is_long_running = duration_days > 14  # Consider >2 weeks as long-running
 
         # Calculate days remaining for ongoing events - same logic as leffa
         days_remaining = 0
@@ -103,10 +102,9 @@ def transform_events(data: RawData, params: ToriConfig):
                 "distance_category": distance_category,
                 "duration_days": duration_days,
                 "is_ongoing": is_ongoing,
-                "is_long_running": is_long_running,
                 "days_remaining": days_remaining,
                 "days_until_start": days_until_start,
-                "event_type": ("ongoing" if (is_ongoing and is_long_running) else "upcoming"),
+                "event_type": ("ongoing" if is_ongoing else "upcoming"),
             }
         )
 

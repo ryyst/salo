@@ -47,7 +47,9 @@ Päivitetty {{ data.updated_timestamp | default('-') }} - <a href="https://salo.
             </div>
 
             <div class="event-dates">
-              {% if event.days_remaining == 0 %}
+              {% if event.days_remaining == 0 and event.duration_days == 0 %}
+                Juuri nyt
+              {% elif event.days_remaining == 0 %}
                 Päättyy tänään
               {% elif event.days_remaining == 1 %}
                 Päättyy huomenna
