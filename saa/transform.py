@@ -7,48 +7,32 @@ from utils.logging import Log
 
 def get_temperature_color(temp: Optional[float]) -> str:
     """
-    Calculate temperature color as a realistic gradient for Finnish weather.
-    Range: -20°C (deep blue) -> 0°C (light blue) -> 15°C (neutral) -> 22°C (warm) -> 35°C (hot red).
-    Returns CSS color string.
+    Calculate temperature color using HSL for clean hue shifting.
+    Range: -20°C (blue 240°) -> 0°C (cyan 180°) -> 20°C (green 120°) -> 30°C (yellow 60°) -> 35°C (red 0°).
+    Returns CSS HSL color string with good contrast.
     """
     if temp is None:
         return "#666666"  # Gray for missing data
 
-    # Clamp temperature to range
+    # Clamp temperature to range and map to hue
     temp = max(-20, min(35, temp))
 
+    # Map temperature to hue (240° to 0°)
+    # -20°C = 240° (blue), 0°C = 200° (light blue), 20°C = 120° (green), 35°C = 0° (red)
     if temp <= 0:
-        # Very cold to freezing: deep blue to light blue
-        # -20°C = deep blue, 0°C = light blue
-        intensity = (temp + 20) / 20  # 0 to 1
-        red = int(100 + intensity * 100)  # 100 to 200
-        green = int(150 + intensity * 100)  # 150 to 250
-        blue = 255  # Always full blue
-        return f"rgb({red}, {green}, {blue})"
-    elif temp <= 15:
-        # Cool to neutral: light blue to neutral purple-gray
-        # 0°C = light blue, 15°C = neutral purple-gray
-        intensity = temp / 15  # 0 to 1
-        red = int(200 + intensity * 55)  # 200 to 255
-        green = int(250 - intensity * 50)  # 250 to 200
-        blue = int(255 - intensity * 55)  # 255 to 200
-        return f"rgb({red}, {green}, {blue})"
-    elif temp <= 22:
-        # Mild to warm: neutral to orange-ish
-        # 15°C = neutral, 22°C = warm orange
-        intensity = (temp - 15) / 7  # 0 to 1
-        red = 255  # Stay at full red
-        green = int(200 + intensity * 40)  # 200 to 240
-        blue = int(200 - intensity * 100)  # 200 to 100
-        return f"rgb({red}, {green}, {blue})"
+        # -20°C to 0°C: blue (240°) to light blue/cyan (200°)
+        hue = 240 - ((temp + 20) / 20) * 40  # 240 to 200
+    elif temp <= 20:
+        # 0°C to 20°C: cyan (200°) to green (120°)
+        hue = 200 - (temp / 20) * 80  # 200 to 120
     else:
-        # Hot: warm orange to hot red
-        # 22°C = warm orange, 35°C = hot red
-        intensity = (temp - 22) / 13  # 0 to 1
-        red = 255  # Stay at full red
-        green = int(240 - intensity * 140)  # 240 to 100
-        blue = int(100 - intensity * 100)  # 100 to 0
-        return f"rgb({red}, {green}, {blue})"
+        # 20°C to 35°C: green (120°) to red (0°)
+        hue = 120 - ((temp - 20) / 15) * 120  # 120 to 0
+
+    # Use high saturation and theme-aware lightness via CSS variables
+    saturation = 65  # High saturation for vibrant colors
+
+    return f"hsl({hue:.0f}, {saturation}%, var(--temp-lightness, 45%))"
 
 
 def get_weather_icon(cloud_cover: Optional[int], precipitation: Optional[float]) -> str:

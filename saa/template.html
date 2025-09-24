@@ -62,7 +62,7 @@ Päivitetty {{ data.updated_timestamp }} - <a href="https://www.ilmatieteenlaito
             </td>
 
             <td class="temperature-cell">
-              <span class="temp-value" style="color: {{ point.temperature_color }}; font-weight: 600;">
+              <span class="temp-value" style="color: {{ point.temperature_color }};">
                 {% if point.temperature is not none %}{{ "%.1f"|format(point.temperature) }}°C{% else %}N/A{% endif %}
               </span>
             </td>
@@ -112,6 +112,17 @@ Päivitetty {{ data.updated_timestamp }} - <a href="https://www.ilmatieteenlaito
 
 {% block styles %}
 <style>
+  /* Temperature color theme variables */
+  :root,
+  :root[data-theme="light"] {
+    --temp-lightness: 45%; /* Darker for light theme - better contrast */
+  }
+
+  :root[data-theme="dark"] {
+    --temp-lightness: 55%; /* Lighter for dark theme - better visibility */
+  }
+
+
   /* Weather-specific styling using the design system */
 
   /* Overview styling */
@@ -271,7 +282,7 @@ Päivitetty {{ data.updated_timestamp }} - <a href="https://www.ilmatieteenlaito
 
   /* Temperature styling with dynamic colors */
   .temp-value {
-    font-weight: 600;
+    font-weight: 500;
     font-size: 1rem;
   }
 
